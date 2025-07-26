@@ -9,9 +9,9 @@ export interface ApiResponse<T = unknown> {
   status: number
 }
 
-// 에러 응답 타입
+// 에러 응답 타입 (@foryourdev/nestjs-crud CrudExceptionFilter 적용)
 export interface ApiError {
-  message: string
+  message: string[]  // 항상 배열 형태
   statusCode: number
   error?: string
   details?: Record<string, unknown>
@@ -99,23 +99,44 @@ export interface ApiRequestOptions {
   retry?: number
 }
 
-// CRUD 필터 타입 (NestJS @dataui/crud 호환)
+// CRUD 필터 타입 (@foryourdev/nestjs-crud 호환)
 export interface CrudFilter {
-  field: string
-  operator: '$eq' | '$ne' | '$gt' | '$lt' | '$gte' | '$lte' | '$starts' | '$ends' | '$cont' | '$excl' | '$in' | '$notin' | '$isnull' | '$notnull'
-  value: string | number | boolean | null
+  [key: string]: string | number | boolean | null
 }
 
 export interface CrudQuery {
-  filter?: string | CrudFilter[]
-  or?: string | CrudFilter[]
-  sort?: string[]
-  join?: string[]
-  limit?: number
+  // 필터링 - underscore 구분자 방식
+  filter?: CrudFilter
+  // 정렬
+  sort?: string | string[]
+  // 관계 포함
+  include?: string | string[]
+  // 페이지네이션 (페이지 번호 방식)
+  page?: {
+    number?: number
+    size?: number
+  }
+  // 페이지네이션 (오프셋 방식)
   offset?: number
-  page?: number
-  cache?: number
+  limit?: number
 }
+
+// 필터 연산자 헬퍼 타입
+export type FilterOperator =
+  | 'eq'        // 같음
+  | 'ne'        // 다름  
+  | 'gt'        // 초과
+  | 'gte'       // 이상
+  | 'lt'        // 미만
+  | 'lte'       // 이하
+  | 'like'      // LIKE 패턴
+  | 'start'     // 시작 문자
+  | 'end'       // 끝 문자
+  | 'in'        // 포함 (IN)
+  | 'not_in'    // 미포함 (NOT IN)
+  | 'between'   // 범위
+  | 'null'      // NULL 값
+  | 'not_null'  // NOT NULL
 
 // Zustand 스토어 타입
 export interface AuthStore {

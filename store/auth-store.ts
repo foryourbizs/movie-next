@@ -1,3 +1,4 @@
+import React from 'react'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
@@ -101,6 +102,19 @@ export const useAuthStore = create<AuthStore>()(
 )
 
 /**
+ * Hydration 상태 관리
+ */
+const useHydration = () => {
+  const [hydrated, setHydrated] = React.useState(false)
+
+  React.useEffect(() => {
+    setHydrated(true)
+  }, [])
+
+  return hydrated
+}
+
+/**
  * 인증 관련 셀렉터들
  */
 export const useAuth = () => {
@@ -110,14 +124,16 @@ export const useAuth = () => {
   const logout = useAuthStore((state) => state.logout)
   const updateUser = useAuthStore((state) => state.updateUser)
   const setTokens = useAuthStore((state) => state.setTokens)
+  const hydrated = useHydration()
 
   return {
     user,
-    isAuthenticated,
+    isAuthenticated: hydrated ? isAuthenticated : false,
     login,
     logout,
     updateUser,
     setTokens,
+    hydrated,
     // 편의 메서드들
     isAdmin: user?.role === 'admin',
     isUser: user?.role === 'user',

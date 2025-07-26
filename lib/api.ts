@@ -106,7 +106,7 @@ class TokenManager {
 
   private async performTokenRefresh(refreshToken: string): Promise<string> {
     try {
-      const response = await ky.post(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.REFRESH}`, {
+      const response = await ky.post(`${API_CONFIG.BASE_URL}/${API_CONFIG.PREFIX}/${API_CONFIG.VERSION}/${API_ENDPOINTS.AUTH.REFRESH}`, {
         headers: {
           'Authorization': `Bearer ${refreshToken}`,
         },
@@ -223,7 +223,10 @@ function createApiClient(): KyInstance {
           if (response) {
             try {
               const errorData = await response.json() as ApiError
-              error.message = errorData.message || error.message
+              // @foryourdev/nestjs-crud는 message가 배열이므로 첫 번째 요소 사용
+              error.message = Array.isArray(errorData.message)
+                ? errorData.message[0] || error.message
+                : String(errorData.message) || error.message
             } catch {
               // JSON 파싱 실패 시 기본 메시지 사용
             }
@@ -290,14 +293,33 @@ export const apiUtils = {
     }
   },
 
-  // CRUD 쿼리 문자열 생성
+  // CRUD 쿼리 문자열 생성 (@foryourdev/nestjs-crud 형식)
   buildCrudQuery(params: Record<string, unknown>): string {
     const searchParams = new URLSearchParams()
 
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach(item => searchParams.append(key, String(item)))
+        if (key === 'filter' && typeof value === 'object' && !Array.isArray(value)) {
+          // 필터 객체를 filter[field_operator]=value 형식으로 변환
+          Object.entries(value as Record<string, unknown>).forEach(([filterKey, filterValue]) => {
+            if (filterValue !== undefined && filterValue !== null) {
+              searchParams.append(`filter[${filterKey}]`, String(filterValue))
+            }
+          })
+        } else if (key === 'page' && typeof value === 'object' && !Array.isArray(value)) {
+          // 페이지 객체를 page[number]=1&page[size]=10 형식으로 변환
+          Object.entries(value as Record<string, unknown>).forEach(([pageKey, pageValue]) => {
+            if (pageValue !== undefined && pageValue !== null) {
+              searchParams.append(`page[${pageKey}]`, String(pageValue))
+            }
+          })
+        } else if (Array.isArray(value)) {
+          // 배열 값 처리 (sort, include 등)
+          if (key === 'sort' || key === 'include') {
+            value.forEach(item => searchParams.append(key, String(item)))
+          } else {
+            searchParams.append(key, value.join(','))
+          }
         } else {
           searchParams.append(key, String(value))
         }
@@ -305,5 +327,21 @@ export const apiUtils = {
     })
 
     return searchParams.toString()
+  },
+
+  // 필터 헬퍼 함수들
+  createFilter(field: string, operator: string, value: unknown): Record<string, unknown> {
+    return {
+      [`${field}_${operator}`]: value
+    }
+  },
+
+  // 이메일 필터 헬퍼 (현재 백엔드에서 허용된 유일한 필터)
+  emailFilter(value: string): Record<string, unknown> {
+    return {
+      filter: {
+        email_like: `%${value}%`
+      }
+    }
   }
 } 

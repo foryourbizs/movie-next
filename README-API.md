@@ -34,9 +34,10 @@ providers/
 - react-hot-toast를 통한 사용자 친화적 에러 메시지
 - HTTP 상태 코드별 맞춤 에러 처리
 
-### 3. NestJS @dataui/crud 호환
-- CRUD 쿼리 문자열 자동 생성
+### 3. NestJS @foryourdev/nestjs-crud 호환
+- CRUD 쿼리 문자열 자동 생성 (underscore 구분자 방식)
 - 페이지네이션, 필터링, 정렬 지원
+- 보안 강화된 필터링 (allowedFilters 기반)
 
 ## 🔧 설정 방법
 
@@ -222,30 +223,40 @@ await apiUtils.delete(`/users/${userId}`)
 import { useUsers } from '@/hooks/use-api'
 
 export function AdvancedUserList() {
-  const { data: activeUsers } = useUsers({
-    filter: 'isActive||$eq||true',
-    sort: ['name,ASC'],
+  // 이메일 필터링 (현재 백엔드에서 허용된 유일한 필터)
+  const { data: gmailUsers } = useUsers({
+    filter: {
+      email_like: '%gmail.com%'  // Gmail 사용자 검색
+    },
+    sort: ['-created_at'],  // 생성일 내림차순
     limit: 20,
-    page: 1
+    offset: 0
   })
 
-  const { data: adminUsers } = useUsers({
-    filter: 'role||$eq||admin',
-    join: ['profile']
+  // 페이지네이션 방식 1: offset/limit
+  const { data: pagedUsers1 } = useUsers({
+    limit: 10,
+    offset: 20  // 3번째 페이지 (0-based)
   })
 
-  // 복합 필터
-  const { data: filteredUsers } = useUsers({
-    filter: [
-      'isActive||$eq||true',
-      'createdAt||$gte||2024-01-01'
-    ],
-    or: ['role||$eq||admin', 'role||$eq||moderator']
+  // 페이지네이션 방식 2: page 객체
+  const { data: pagedUsers2 } = useUsers({
+    page: {
+      number: 3,  // 페이지 번호 (1-based)
+      size: 10    // 페이지 크기
+    }
+  })
+
+  // 정렬 옵션
+  const { data: sortedUsers } = useUsers({
+    sort: ['name', '-created_at']  // 이름 오름차순, 생성일 내림차순
   })
 
   return <div>{/* 사용자 목록 렌더링 */}</div>
 }
 ```
+
+**⚠️ 중요**: 현재 백엔드는 `allowedFilters: ['email']`만 설정되어 있어 **이메일 필드만 필터링 가능**합니다.
 
 ### 2. 캐시 및 무효화 관리
 

@@ -23,12 +23,32 @@ import type {
 // 로그인
 export const useLogin = (options?: MutationOptions<AuthResponse, LoginRequest>) => {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (data: LoginRequest): Promise<AuthResponse> => {
-      return apiUtils.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGN_IN, data)
+      const authResponse = await apiUtils.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGN_IN, data)
+
+      // 토큰을 임시로 설정하여 /users/me API 호출이 가능하도록 함
+      const { tokenManager } = await import('@/lib/api')
+      tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken)
+
+      // 사용자 정보 가져오기
+      try {
+        const userInfo = await apiUtils.get<User>(API_ENDPOINTS.USERS.ME)
+        return {
+          ...authResponse,
+          user: userInfo
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info after login:', error)
+        // 사용자 정보를 가져오지 못해도 로그인은 성공으로 처리
+        return authResponse
+      }
     },
     onSuccess: (data, variables) => {
+      // 사용자 관련 쿼리 무효화
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME })
       toast.success('로그인에 성공했습니다.')
       options?.onSuccess?.(data, variables)
     },
@@ -43,12 +63,32 @@ export const useLogin = (options?: MutationOptions<AuthResponse, LoginRequest>) 
 // 회원가입
 export const useSignUp = (options?: MutationOptions<AuthResponse, SignUpRequest>) => {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (data: SignUpRequest): Promise<AuthResponse> => {
-      return apiUtils.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGN_UP, data)
+      const authResponse = await apiUtils.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGN_UP, data)
+
+      // 토큰을 임시로 설정하여 /users/me API 호출이 가능하도록 함
+      const { tokenManager } = await import('@/lib/api')
+      tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken)
+
+      // 사용자 정보 가져오기
+      try {
+        const userInfo = await apiUtils.get<User>(API_ENDPOINTS.USERS.ME)
+        return {
+          ...authResponse,
+          user: userInfo
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info after sign up:', error)
+        // 사용자 정보를 가져오지 못해도 회원가입은 성공으로 처리
+        return authResponse
+      }
     },
     onSuccess: (data, variables) => {
+      // 사용자 관련 쿼리 무효화
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME })
       toast.success('회원가입에 성공했습니다.')
       options?.onSuccess?.(data, variables)
     },

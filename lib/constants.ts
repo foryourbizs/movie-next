@@ -14,30 +14,30 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // 인증 관련
   AUTH: {
-    SIGN_UP: '/auth/sign/up',
-    SIGN_IN: '/auth/sign/in',
-    SIGN_OUT: '/auth/sign/out',
-    REFRESH: '/auth/sign/refresh',
-    ME: '/auth/me',
+    SIGN_UP: 'auth/sign/up',
+    SIGN_IN: 'auth/sign/in',
+    SIGN_OUT: 'auth/sign/out',
+    REFRESH: 'auth/sign/refresh',
+    ME: 'auth/me',
   },
 
   // 소셜 로그인
   SOCIAL: {
-    GOOGLE: '/auth/google',
-    GOOGLE_CALLBACK: '/auth/google/callback',
-    KAKAO: '/auth/kakao',
-    KAKAO_CALLBACK: '/auth/kakao/callback',
-    NAVER: '/auth/naver',
-    NAVER_CALLBACK: '/auth/naver/callback',
-    APPLE: '/auth/apple',
-    APPLE_CALLBACK: '/auth/apple/callback',
+    GOOGLE: 'auth/google',
+    GOOGLE_CALLBACK: 'auth/google/callback',
+    KAKAO: 'auth/kakao',
+    KAKAO_CALLBACK: 'auth/kakao/callback',
+    NAVER: 'auth/naver',
+    NAVER_CALLBACK: 'auth/naver/callback',
+    APPLE: 'auth/apple',
+    APPLE_CALLBACK: 'auth/apple/callback',
   },
 
   // 사용자 관리
   USERS: {
-    BASE: '/users',
-    ME: '/users/me',
-    BY_ID: (id: string) => `/users/${id}`,
+    BASE: 'users',
+    ME: 'users/me',
+    BY_ID: (id: string) => `users/${id}`,
   },
 } as const
 
