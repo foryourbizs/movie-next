@@ -577,12 +577,9 @@ async function generateExtendableApiHook(entity, entityLower, entityKebab) {
     return
   }
 
-  const hookContent = `import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
+  const hookContent = `import { useQueryClient } from '@tanstack/react-query'
 
-import { apiUtils } from '@/lib/api'
 import { useCrud${entity}Api, Crud${entity}Api } from './use-crud-${entityKebab}-api'
-import type { ${entity}, Create${entity}Request, Update${entity}Request, ${entity}Stats } from '@/types/${entityLower}/${entityLower}'
-import type { PaginatedResponse } from '@/types/api'
 
 /**
  * ${entity} API 훅 (확장 가능)

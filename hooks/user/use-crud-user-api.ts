@@ -11,7 +11,7 @@ import type { QueryError, MutationOptions } from '@/types/query'
 /**
  * User CRUD API 훅 클래스 (자동 생성)
  * 
- * ⚠️  이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+ * ⚠️  이 파일은 덮어쓰기 됩니다. 직접 수정하지 마세요.
  * 커스텀 기능은 use-user-api.ts 파일에 추가하세요.
  * 
  * 백엔드에서 허용된 메서드: index, show
@@ -21,7 +21,7 @@ export class CrudUserApi {
 
   constructor(
     private queryClient: ReturnType<typeof useQueryClient>
-  ) { }
+  ) {}
 
   /**
    * User 목록 조회
@@ -55,6 +55,6 @@ export class CrudUserApi {
  */
 export function useCrudUserApi() {
   const queryClient = useQueryClient()
-
+  
   return new CrudUserApi(queryClient)
 }

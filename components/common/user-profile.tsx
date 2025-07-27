@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { useCrudUserApi } from '@/hooks/user/use-crud-user-api'
+import { useUserApi } from '@/hooks/user/use-user-api'
 import { useAuthApi } from '@/hooks/use-auth-api'
 import { useAuth } from '@/store/auth-store'
 import { cn } from '@/lib/utils'
@@ -29,7 +29,7 @@ interface UserProfileProps {
 export function UserProfile({ className }: UserProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
   const { user, logout: authLogout } = useAuth()
-  const userApi = useCrudUserApi()
+  const userApi = useUserApi()
   const authApi = useAuthApi()
 
   // 현재 사용자 정보 조회

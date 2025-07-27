@@ -16,12 +16,12 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth, usePermissions } from '@/store/auth-store'
-import { useCrudUserApi } from '@/hooks/user/use-crud-user-api'
+import { useUserApi } from '@/hooks/user/use-user-api'
 
 export default function DashboardPage() {
   const { isAuthenticated, user, hydrated } = useAuth()
   const { canManageUsers } = usePermissions()
-  const userApi = useCrudUserApi()
+  const userApi = useUserApi()
 
   // 🚀 모든 훅을 조건부 렌더링 이전에 호출!
   const { data: currentUser, isLoading } = userApi.show(user?.id || '')
