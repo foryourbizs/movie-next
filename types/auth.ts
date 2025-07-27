@@ -2,7 +2,7 @@
  * 인증 관련 타입 정의
  */
 
-import type { User } from './user'
+import type { User } from '@/types/user'
 
 // 로그인 요청 타입
 export interface LoginRequest {
