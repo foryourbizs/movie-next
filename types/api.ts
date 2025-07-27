@@ -25,12 +25,26 @@ export interface PaginationParams {
   filter?: string
 }
 
+// nestjs-crud 페이지네이션 응답 구조
 export interface PaginatedResponse<T> {
   data: T[]
-  count: number
-  total: number
-  page: number
-  pageCount: number
+  metadata: {
+    operation: string
+    timestamp: string
+    affectedCount: number
+    includedRelations?: string[]
+    excludedFields?: string[]
+    pagination: {
+      type: 'offset' | 'cursor' | 'number'
+      total: number
+      page?: number
+      pages?: number
+      totalPages?: number
+      offset?: number
+      limit?: number
+      nextCursor?: string
+    }
+  }
 }
 
 // 인증 관련 타입
@@ -111,14 +125,17 @@ export interface CrudQuery {
   sort?: string | string[]
   // 관계 포함
   include?: string | string[]
-  // 페이지네이션 (페이지 번호 방식)
+  // 페이지네이션 (nestjs-crud 호환)
   page?: {
+    // 페이지 번호 방식
     number?: number
     size?: number
+    // 오프셋 방식  
+    offset?: number
+    limit?: number
+    // 커서 방식
+    cursor?: string
   }
-  // 페이지네이션 (오프셋 방식)
-  offset?: number
-  limit?: number
 }
 
 // 필터 연산자 헬퍼 타입

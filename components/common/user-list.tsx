@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 10
 export function UserList({ className }: UserListProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [emailFilter, setEmailFilter] = useState('')
-  const [sortBy, setSortBy] = useState<string>('-created_at')
+  const [sortBy, setSortBy] = useState<string>('-createdAt')
   
   const { user: currentUser } = useAuth()
   const { canManageUsers } = usePermissions()
@@ -31,8 +31,10 @@ export function UserList({ className }: UserListProps) {
   // 쿼리 파라미터 구성
   const query = useMemo((): CrudQuery => {
     const baseQuery: CrudQuery = {
-      limit: ITEMS_PER_PAGE,
-      offset: (currentPage - 1) * ITEMS_PER_PAGE,
+      page: {
+        offset: (currentPage - 1) * ITEMS_PER_PAGE,
+        limit: ITEMS_PER_PAGE,
+      },
       sort: [sortBy],
     }
 
@@ -72,7 +74,7 @@ export function UserList({ className }: UserListProps) {
   }
 
   // 총 페이지 수 계산
-  const totalPages = usersData ? Math.ceil(usersData.total / ITEMS_PER_PAGE) : 0
+  const totalPages = usersData ? Math.ceil(usersData.metadata.pagination.total / ITEMS_PER_PAGE) : 0
 
   if (error) {
     return (
@@ -90,9 +92,9 @@ export function UserList({ className }: UserListProps) {
     <Card className={cn('w-full', className)}>
       <CardHeader>
         <CardTitle>사용자 목록</CardTitle>
-        <CardDescription>
-          등록된 모든 사용자를 확인할 수 있습니다. ({usersData?.total || 0}명)
-        </CardDescription>
+                 <CardDescription>
+           등록된 모든 사용자를 확인할 수 있습니다. ({usersData?.metadata.pagination.total || 0}명)
+         </CardDescription>
       </CardHeader>
       <CardContent>
         {/* 필터 및 정렬 컨트롤 */}
@@ -111,8 +113,8 @@ export function UserList({ className }: UserListProps) {
                onChange={(e) => handleSortChange(e.target.value)}
                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
              >
-               <option value="-created_at">최신 가입순</option>
-               <option value="created_at">오래된 가입순</option>
+                                <option value="-createdAt">최신 가입순</option>
+                 <option value="createdAt">오래된 가입순</option>
                <option value="name">이름순 (A-Z)</option>
                <option value="-name">이름순 (Z-A)</option>
                <option value="email">이메일순 (A-Z)</option>
@@ -190,10 +192,10 @@ export function UserList({ className }: UserListProps) {
             {/* 페이지네이션 */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
-                <p className="text-sm text-gray-500">
-                  총 {usersData?.total}명 중 {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, usersData?.total || 0)}-
-                  {Math.min(currentPage * ITEMS_PER_PAGE, usersData?.total || 0)}명 표시
-                </p>
+                                 <p className="text-sm text-gray-500">
+                   총 {usersData?.metadata.pagination.total}명 중 {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, usersData?.metadata.pagination.total || 0)}-
+                   {Math.min(currentPage * ITEMS_PER_PAGE, usersData?.metadata.pagination.total || 0)}명 표시
+                 </p>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"

@@ -169,7 +169,7 @@ export function UserExample() {
 
   // 조회 작업
   const { data: currentUser } = userApi.me() // 내 정보
-  const { data: users } = userApi.index({ limit: 10 }) // 목록
+  const { data: users } = userApi.index({ page: { limit: 10 } }) // 목록
   const { data: user } = userApi.show('user-id') // 특정 유저
 
   // 수정 작업
@@ -292,17 +292,21 @@ const userApi = useUserApi()
 
 // 페이지네이션과 정렬
 const { data } = userApi.index({
-  limit: 20,
-  offset: 0,
-  sort: ['-created_at', 'name'] // 생성일 내림차순, 이름 오름차순
+  page: {
+    offset: 0,
+    limit: 20,
+  },
+  sort: ['-createdAt', 'name'] // 생성일 내림차순, 이름 오름차순
 })
 
 // 필터링
 const { data: filteredUsers } = userApi.index({
-  limit: 10,
+  page: {
+    limit: 10,
+  },
   filter: {
     'email_like': '%gmail%',        // 이메일에 'gmail' 포함
-    'created_at_gte': '2024-01-01'  // 2024년 1월 1일 이후 가입
+    'createdAt_gte': '2024-01-01'  // 2024년 1월 1일 이후 가입
   }
 })
 ```
@@ -333,17 +337,17 @@ const checkToken = async () => {
 ```tsx
 const userApi = useUserApi()
 
-// 특정 사용자 데이터 프리페치
-const prefetchUser = async (userId: string) => {
-  const prefetch = userApi.prefetch()
-  await prefetch.user(userId)
-}
+  // 특정 사용자 데이터 프리페치
+  const prefetchUser = async (userId: string) => {
+    const prefetch = userApi.prefetch()
+    await prefetch.user(userId)
+  }
 
-// 사용자 목록 미리 로드
-const prefetchUsers = async () => {
-  const prefetch = userApi.prefetch()
-  await prefetch.users({ limit: 50 })
-}
+  // 사용자 목록 미리 로드
+  const prefetchUsers = async () => {
+    const prefetch = userApi.prefetch()
+    await prefetch.users({ page: { limit: 50 } })
+  }
 
 // 캐시 무효화
 const refreshData = () => {
@@ -495,8 +499,11 @@ export const QUERY_KEYS = {
 ```tsx
 const postApi = usePostApi()
 
-// 게시물 목록 조회
-const { data: posts } = postApi.index({ limit: 10, sort: ['-created_at'] })
+ // 게시물 목록 조회
+ const { data: posts } = postApi.index({ 
+   page: { limit: 10 }, 
+   sort: ['-createdAt'] 
+ })
 
 // 게시물 생성
 const createMutation = postApi.create()

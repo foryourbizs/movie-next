@@ -206,12 +206,8 @@ export const apiUtils = {
             }
           })
         } else if (Array.isArray(value)) {
-          // 배열 값 처리 (sort, include 등)
-          if (key === 'sort' || key === 'include') {
-            value.forEach(item => searchParams.append(key, String(item)))
-          } else {
-            searchParams.append(key, value.join(','))
-          }
+          // 배열 값 처리 - nestjs-crud는 쉼표로 구분된 단일 값을 원함
+          searchParams.append(key, value.join(','))
         } else {
           searchParams.append(key, String(value))
         }
