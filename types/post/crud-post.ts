@@ -23,9 +23,6 @@ export interface Post {
 export interface CreatePostRequest {
   title: string
   content: string
-  summary?: string | null
-  isPublished: boolean
-  viewCount: number
   userId: string
 }
 
@@ -33,16 +30,11 @@ export interface CreatePostRequest {
 export interface UpdatePostRequest {
   title?: string
   content?: string
-  summary?: string | null
-  isPublished?: boolean
-  viewCount?: number
   userId?: string
 }
 
 // Post 필터 타입
 export interface PostFilter {
   title?: string
-  content?: string
-  summary?: string
   userId?: string
 }

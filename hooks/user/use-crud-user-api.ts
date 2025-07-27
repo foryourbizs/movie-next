@@ -25,6 +25,8 @@ export class CrudUserApi {
 
   /**
    * User 목록 조회
+   * @filters 허용된 필터: email
+   * @includes 허용된 관계: posts
    */
   index = (query?: CrudQuery, options?: UseQueryOptions<PaginatedResponse<User>>) => {
     return useQuery({
@@ -39,6 +41,7 @@ export class CrudUserApi {
 
   /**
    * User 단일 조회
+   * @includes 허용된 관계: posts
    */
   show = (id: string, options?: UseQueryOptions<User>) => {
     return useQuery({

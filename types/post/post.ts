@@ -32,16 +32,3 @@ export interface PostFilter extends CrudPostFilter {
   // 여기에 추가 필터를 정의하세요
   // customFilter?: string
 }
-
-// 커스텀 타입들을 여기에 추가하세요
-export interface PostStats {
-  totalCount: number
-  activeCount: number
-  // 추가 통계 필드들...
-}
-
-export type PostStatus = 'active' | 'inactive' | 'pending'
-
-// 유틸리티 타입들
-export type PostSummary = Pick<Post, 'id' | 'name' | 'createdAt'>
-export type PostFormData = Omit<CreatePostRequest, 'id'>

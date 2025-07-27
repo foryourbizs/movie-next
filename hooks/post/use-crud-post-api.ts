@@ -25,6 +25,8 @@ export class CrudPostApi {
 
   /**
    * Post 목록 조회
+   * @filters 허용된 필터: title, userId
+   * @includes 허용된 관계: user
    */
   index = (query?: CrudQuery, options?: UseQueryOptions<PaginatedResponse<Post>>) => {
     return useQuery({
@@ -39,6 +41,7 @@ export class CrudPostApi {
 
   /**
    * Post 단일 조회
+   * @includes 허용된 관계: user
    */
   show = (id: string, options?: UseQueryOptions<Post>) => {
     return useQuery({
@@ -51,6 +54,7 @@ export class CrudPostApi {
 
   /**
    * Post 생성
+   * @params 허용된 파라미터: title, content, userId
    */
   create = (options?: MutationOptions<Post, CreatePostRequest>) => {
     return useMutation({
@@ -71,6 +75,7 @@ export class CrudPostApi {
 
   /**
    * Post 수정
+   * @params 허용된 파라미터: title, content, userId
    */
   update = (id: string, options?: MutationOptions<Post, UpdatePostRequest>) => {
     return useMutation({

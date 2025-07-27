@@ -1,7 +1,7 @@
 /**
  * User 타입 확장
  * 
- * 이 파일은 자동 생성되지 않습니다. 커스텀 타입을 여기에 추가하세요.
+ * 이 파일은 자동 덮어쓰기되지 않습니다. 커스텀 타입을 여기에 추가하세요.
  */
 
 import type {
@@ -32,16 +32,3 @@ export interface UserFilter extends CrudUserFilter {
   // 여기에 추가 필터를 정의하세요
   // customFilter?: string
 }
-
-// 커스텀 타입들을 여기에 추가하세요
-export interface UserStats {
-  totalCount: number
-  activeCount: number
-  // 추가 통계 필드들...
-}
-
-export type UserStatus = 'active' | 'inactive' | 'pending'
-
-// 유틸리티 타입들
-export type UserSummary = Pick<User, 'id' | 'name' | 'createdAt'>
-export type UserFormData = Omit<CreateUserRequest, 'id'>

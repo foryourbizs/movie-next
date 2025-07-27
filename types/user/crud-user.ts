@@ -36,31 +36,15 @@ export interface User {
 
 // User 생성 요청 타입
 export interface CreateUserRequest {
-  name: string
-  email: string
-  password?: string | null
   phone?: string | null
-  role: UserRole
-  provider: UserProvider
 }
 
 // User 수정 요청 타입
 export interface UpdateUserRequest {
-  name?: string
-  password?: string | null
   phone?: string | null
-  role?: UserRole
-  provider?: UserProvider
 }
 
 // User 필터 타입
 export interface UserFilter {
-  name?: string
   email?: string
-  password?: string
-  phone?: string
-  role?: UserRole
-  provider?: UserProvider
-  providerId?: string
-  refreshToken?: string
 }
