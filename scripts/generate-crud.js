@@ -362,7 +362,7 @@ async function generateExtendableTypes(entity, entityLower, entityKebab) {
   const typeContent = `/**
  * ${entity} 타입 확장
  * 
- * 이 파일은 자동 생성되지 않습니다. 커스텀 타입을 여기에 추가하세요.
+ * 이 파일은 자동 덮어쓰기되지 않습니다. 커스텀 타입을 여기에 추가하세요.
  */
 
 import type {
@@ -538,7 +538,7 @@ import type { QueryError, MutationOptions } from '@/types/query'
 /**
  * ${entity} CRUD API 훅 클래스 (자동 생성)
  * 
- * ⚠️  이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+ * ⚠️  이 파일은 덮어쓰기 됩니다. 직접 수정하지 마세요.
  * 커스텀 기능은 use-${entityKebab}-api.ts 파일에 추가하세요.
  * 
  * 백엔드에서 허용된 메서드: ${allowedMethods.join(', ')}
@@ -587,42 +587,9 @@ import type { PaginatedResponse } from '@/types/api'
 /**
  * ${entity} API 훅 (확장 가능)
  * 
- * 이 파일은 자동 생성되지 않습니다. 커스텀 메서드를 여기에 추가하세요.
+ * 이 파일은 자동 덮어쓰기되지 않습니다. 커스텀 메서드를 여기에 추가하세요.
  */
 export class ${entity}Api extends Crud${entity}Api {
-  /**
-   * 커스텀 메서드 예시: 활성 사용자만 조회
-   * 
-   * 아래 주석을 해제하고 필요에 맞게 수정하세요:
-   */
-  
-  /*
-  getActive${entity}s = (options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
-    return this.index({ 
-      filter: { isActive: true } 
-    }, options)
-  }
-
-  getInactive${entity}s = (options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
-    return this.index({ 
-      filter: { isActive: false } 
-    }, options)
-  }
-
-  searchBy${entity}Name = (name: string, options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
-    return this.index({ 
-      filter: { name_like: name } 
-    }, options)
-  }
-
-  get${entity}Stats = () => {
-    return useQuery({
-      queryKey: ['${entityLower}', 'stats'],
-      queryFn: () => apiUtils.get<${entity}Stats>(\`\${this.baseUrl}/stats\`),
-    })
-  }
-  */
-
   // 여기에 커스텀 메서드들을 추가하세요...
 }
 

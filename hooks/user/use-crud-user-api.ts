@@ -21,7 +21,7 @@ export class CrudUserApi {
 
   constructor(
     private queryClient: ReturnType<typeof useQueryClient>
-  ) {}
+  ) { }
 
   /**
    * User 목록 조회
@@ -55,6 +55,6 @@ export class CrudUserApi {
  */
 export function useCrudUserApi() {
   const queryClient = useQueryClient()
-  
+
   return new CrudUserApi(queryClient)
 }
