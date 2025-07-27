@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { apiUtils } from '@/lib/api'
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
-import type { User } from '@/types/user'
+import type { User } from '@/types/user/crud-user'
 import type { PaginatedResponse } from '@/types/api'
 import type { CrudQuery } from '@/types/crud'
 

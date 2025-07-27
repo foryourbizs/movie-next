@@ -3,17 +3,20 @@ import toast from 'react-hot-toast'
 
 import { apiUtils } from '@/lib/api'
 import { QUERY_KEYS } from '@/lib/constants'
-import type { User, CreateUserRequest, UpdateUserRequest } from '@/types/user'
+import type { User, CreateUserRequest, UpdateUserRequest } from '@/types/user/crud-user'
 import type { PaginatedResponse } from '@/types/api'
 import type { CrudQuery } from '@/types/crud'
 import type { QueryError, MutationOptions } from '@/types/query'
 
 /**
- * User API 훅 클래스
+ * User CRUD API 훅 클래스 (자동 생성)
+ * 
+ * ⚠️  이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+ * 커스텀 기능은 use-user-api.ts 파일에 추가하세요.
  * 
  * 백엔드에서 허용된 메서드: index, show
  */
-export class UserApi {
+export class CrudUserApi {
   private readonly baseUrl = '/api/v1/users'
 
   constructor(
@@ -48,10 +51,10 @@ export class UserApi {
 }
 
 /**
- * User API 훅
+ * User CRUD API 훅 (자동 생성)
  */
-export function useUserApi() {
+export function useCrudUserApi() {
   const queryClient = useQueryClient()
   
-  return new UserApi(queryClient)
+  return new CrudUserApi(queryClient)
 }

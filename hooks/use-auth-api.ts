@@ -5,8 +5,8 @@ import toast from 'react-hot-toast'
 import { apiUtils } from '@/lib/api'
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
 import type { LoginRequest, SignUpRequest, AuthResponse } from '@/types/auth'
-import type { User } from '@/types/user'
 import type { QueryError, MutationOptions } from '@/types/query'
+import { User } from '@/types/user/crud-user'
 
 /**
  * 인증 API 클래스

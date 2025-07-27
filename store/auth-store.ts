@@ -5,7 +5,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { tokenManager } from '@/lib/token-manager'
 import type { AuthStore } from '@/types/store'
 import type { AuthResponse } from '@/types/auth'
-import type { User } from '@/types/user'
+import type { User } from '@/types/user/crud-user'
 
 /**
  * 인증 상태 관리 스토어

@@ -210,19 +210,30 @@ async function generateCRUD() {
 
     console.log(`\n🚀 ${entity} CRUD 생성 중...`)
 
-    // 1. 타입 정의 생성
-    await generateTypes(entity, entityLower, fields)
+    // 1. 폴더 생성
+    await createDirectories(entityLower)
 
-    // 2. API 훅 생성 (클래스 기반)
-    await generateApiHook(entity, entityLower, entityKebab, entityPlural, entityPluralKebab, crudInfo)
+    // 2. CRUD 타입 정의 생성
+    await generateCrudTypes(entity, entityLower, fields)
 
-    // 3. constants.ts 업데이트
+    // 3. 확장 가능한 타입 정의 생성 (존재하지 않을 때만)
+    await generateExtendableTypes(entity, entityLower, entityKebab)
+
+    // 4. CRUD API 훅 생성 (클래스 기반)
+    await generateCrudApiHook(entity, entityLower, entityKebab, entityPlural, entityPluralKebab, crudInfo)
+
+    // 5. 확장 가능한 API 훅 생성 (존재하지 않을 때만)
+    await generateExtendableApiHook(entity, entityLower, entityKebab)
+
+    // 6. constants.ts 업데이트
     await updateConstants(entity, entityLower, entityPlural, entityPluralKebab)
 
     console.log(`\n✅ ${entity} CRUD 생성 완료!`)
     console.log(`\n📁 생성된 파일들:`)
-    console.log(`   - types/crud-${entityLower}.ts`)
-    console.log(`   - hooks/use-crud-${entityKebab}-api.ts`)
+    console.log(`   - types/${entityLower}/crud-${entityLower}.ts (자동 생성)`)
+    console.log(`   - types/${entityLower}/${entityLower}.ts (확장용, 존재시 스킵)`)
+    console.log(`   - hooks/${entityLower}/use-crud-${entityKebab}-api.ts (자동 생성)`)
+    console.log(`   - hooks/${entityLower}/use-${entityKebab}-api.ts (확장용, 존재시 스킵)`)
     console.log(`\n🎯 사용법:`)
     console.log(`   const ${entityLower}Api = use${entity}Api()`)
     console.log(`   const { data } = ${entityLower}Api.index() // 목록 조회`)
@@ -230,6 +241,9 @@ async function generateCRUD() {
     console.log(`   const create = ${entityLower}Api.create() // 생성`)
     console.log(`   const update = ${entityLower}Api.update(id) // 수정`)
     console.log(`   const remove = ${entityLower}Api.destroy(id) // 삭제`)
+    console.log(`\n💡 커스텀 확장:`)
+    console.log(`   types/${entityLower}/${entityLower}.ts 에서 타입 확장`)
+    console.log(`   hooks/${entityLower}/use-${entityKebab}-api.ts 에서 메서드 확장`)
 
   } catch (error) {
     console.error('❌ 오류 발생:', error.message)
@@ -237,7 +251,26 @@ async function generateCRUD() {
   }
 }
 
-async function generateTypes(entity, entityLower, fields) {
+async function createDirectories(entityLower) {
+  const typesDir = `types/${entityLower}`
+  const hooksDir = `hooks/${entityLower}`
+
+  try {
+    if (!fs.existsSync(typesDir)) {
+      await fs.promises.mkdir(typesDir, { recursive: true })
+      console.log(`📁 폴더 생성: ${typesDir}`)
+    }
+
+    if (!fs.existsSync(hooksDir)) {
+      await fs.promises.mkdir(hooksDir, { recursive: true })
+      console.log(`📁 폴더 생성: ${hooksDir}`)
+    }
+  } catch (error) {
+    console.warn(`⚠️  폴더 생성 실패: ${error.message}`)
+  }
+}
+
+async function generateCrudTypes(entity, entityLower, fields) {
   // Enum 타입들 먼저 정의
   const enumTypes = fields
     .filter(field => field.isEnum && field.enumValues)
@@ -312,12 +345,74 @@ ${fields
 }
 `
 
-  const filePath = `types/crud-${entityLower}.ts`
+  const filePath = `types/${entityLower}/crud-${entityLower}.ts`
   await fs.promises.writeFile(filePath, typeContent)
-  console.log(`✅ 타입 정의 생성: ${filePath}`)
+  console.log(`✅ CRUD 타입 정의 생성: ${filePath}`)
 }
 
-async function generateApiHook(entity, entityLower, entityKebab, entityPlural, entityPluralKebab, crudInfo) {
+async function generateExtendableTypes(entity, entityLower, entityKebab) {
+  const filePath = `types/${entityLower}/${entityLower}.ts`
+
+  // 파일이 이미 존재하면 스킵
+  if (fs.existsSync(filePath)) {
+    console.log(`⏭️  타입 확장 파일 존재함 (스킵): ${filePath}`)
+    return
+  }
+
+  const typeContent = `/**
+ * ${entity} 타입 확장
+ * 
+ * 이 파일은 자동 생성되지 않습니다. 커스텀 타입을 여기에 추가하세요.
+ */
+
+import type {
+  ${entity} as Crud${entity},
+  Create${entity}Request as CrudCreate${entity}Request,
+  Update${entity}Request as CrudUpdate${entity}Request,
+  ${entity}Filter as Crud${entity}Filter
+} from './crud-${entityLower}'
+
+// 기본 타입 재사용 (필요시 확장 가능)
+export interface ${entity} extends Crud${entity} {
+  // 여기에 추가 필드를 정의하세요
+  // customField?: string
+}
+
+// 생성 요청 타입 확장
+export interface Create${entity}Request extends CrudCreate${entity}Request {
+  // 여기에 추가 필드를 정의하세요
+}
+
+// 수정 요청 타입 확장  
+export interface Update${entity}Request extends CrudUpdate${entity}Request {
+  // 여기에 추가 필드를 정의하세요
+}
+
+// 필터 타입 확장
+export interface ${entity}Filter extends Crud${entity}Filter {
+  // 여기에 추가 필터를 정의하세요
+  // customFilter?: string
+}
+
+// 커스텀 타입들을 여기에 추가하세요
+export interface ${entity}Stats {
+  totalCount: number
+  activeCount: number
+  // 추가 통계 필드들...
+}
+
+export type ${entity}Status = 'active' | 'inactive' | 'pending'
+
+// 유틸리티 타입들
+export type ${entity}Summary = Pick<${entity}, 'id' | 'name' | 'createdAt'>
+export type ${entity}FormData = Omit<Create${entity}Request, 'id'>
+`
+
+  await fs.promises.writeFile(filePath, typeContent)
+  console.log(`✅ 확장 가능한 타입 정의 생성: ${filePath}`)
+}
+
+async function generateCrudApiHook(entity, entityLower, entityKebab, entityPlural, entityPluralKebab, crudInfo) {
   // CRUD 정보가 있으면 허용된 메서드만 생성
   const allowedMethods = crudInfo?.allowedMethods || ['index', 'show', 'create', 'update', 'destroy']
 
@@ -435,17 +530,20 @@ import toast from 'react-hot-toast'
 
 import { apiUtils } from '@/lib/api'
 import { QUERY_KEYS } from '@/lib/constants'
-import type { ${entity}, Create${entity}Request, Update${entity}Request } from '@/types/${entityLower}'
+import type { ${entity}, Create${entity}Request, Update${entity}Request } from '@/types/${entityLower}/crud-${entityLower}'
 import type { PaginatedResponse } from '@/types/api'
 import type { CrudQuery } from '@/types/crud'
 import type { QueryError, MutationOptions } from '@/types/query'
 
 /**
- * ${entity} API 훅 클래스
+ * ${entity} CRUD API 훅 클래스 (자동 생성)
+ * 
+ * ⚠️  이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+ * 커스텀 기능은 use-${entityKebab}-api.ts 파일에 추가하세요.
  * 
  * 백엔드에서 허용된 메서드: ${allowedMethods.join(', ')}
  */
-export class ${entity}Api {
+export class Crud${entity}Api {
   private readonly baseUrl = '/api/v1/${entityPluralKebab}'
 
   constructor(
@@ -456,18 +554,95 @@ ${methodsArray.join('\n\n')}
 }
 
 /**
+ * ${entity} CRUD API 훅 (자동 생성)
+ */
+export function useCrud${entity}Api() {
+  const queryClient = useQueryClient()
+  
+  return new Crud${entity}Api(queryClient)
+}
+`
+
+  const filePath = `hooks/${entityLower}/use-crud-${entityKebab}-api.ts`
+  await fs.promises.writeFile(filePath, hookContent)
+  console.log(`✅ CRUD API 훅 생성: ${filePath}`)
+}
+
+async function generateExtendableApiHook(entity, entityLower, entityKebab) {
+  const filePath = `hooks/${entityLower}/use-${entityKebab}-api.ts`
+
+  // 파일이 이미 존재하면 스킵
+  if (fs.existsSync(filePath)) {
+    console.log(`⏭️  API 훅 확장 파일 존재함 (스킵): ${filePath}`)
+    return
+  }
+
+  const hookContent = `import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
+
+import { apiUtils } from '@/lib/api'
+import { useCrud${entity}Api, Crud${entity}Api } from './use-crud-${entityKebab}-api'
+import type { ${entity}, Create${entity}Request, Update${entity}Request, ${entity}Stats } from '@/types/${entityLower}/${entityLower}'
+import type { PaginatedResponse } from '@/types/api'
+
+/**
+ * ${entity} API 훅 (확장 가능)
+ * 
+ * 이 파일은 자동 생성되지 않습니다. 커스텀 메서드를 여기에 추가하세요.
+ */
+export class ${entity}Api extends Crud${entity}Api {
+  /**
+   * 커스텀 메서드 예시: 활성 사용자만 조회
+   * 
+   * 아래 주석을 해제하고 필요에 맞게 수정하세요:
+   */
+  
+  /*
+  getActive${entity}s = (options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
+    return this.index({ 
+      filter: { isActive: true } 
+    }, options)
+  }
+
+  getInactive${entity}s = (options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
+    return this.index({ 
+      filter: { isActive: false } 
+    }, options)
+  }
+
+  searchBy${entity}Name = (name: string, options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
+    return this.index({ 
+      filter: { name_like: name } 
+    }, options)
+  }
+
+  get${entity}Stats = () => {
+    return useQuery({
+      queryKey: ['${entityLower}', 'stats'],
+      queryFn: () => apiUtils.get<${entity}Stats>(\`\${this.baseUrl}/stats\`),
+    })
+  }
+  */
+
+  // 여기에 커스텀 메서드들을 추가하세요...
+}
+
+/**
  * ${entity} API 훅
+ * 
+ * CRUD 기능 + 커스텀 확장 기능 포함
  */
 export function use${entity}Api() {
   const queryClient = useQueryClient()
   
   return new ${entity}Api(queryClient)
 }
+
+// 편의를 위한 개별 export
+export { useCrud${entity}Api }
 `
 
-  const filePath = `hooks/use-crud-${entityKebab}-api.ts`
   await fs.promises.writeFile(filePath, hookContent)
-  console.log(`✅ API 훅 생성: ${filePath}`)
+  console.log(`✅ 확장 가능한 API 훅 생성: ${filePath}`)
 }
 
 async function updateConstants(entity, entityLower, entityPlural, entityPluralKebab) {

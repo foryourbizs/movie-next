@@ -2,7 +2,7 @@
  * Zustand 스토어 관련 타입 정의
  */
 
-import type { User } from './user'
+import type { User } from '@/types/user/crud-user'
 import type { AuthResponse } from './auth'
 
 // 인증 스토어 타입

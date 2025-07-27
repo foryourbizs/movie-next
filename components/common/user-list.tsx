@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useUserApi } from '@/hooks/use-user-api'
+import { useCrudUserApi } from '@/hooks/user/use-crud-user-api'
 import { useAuth, usePermissions } from '@/store/auth-store'
 import { useQueryState } from '@/hooks/use-query-state'
 import { cn } from '@/lib/utils'
@@ -20,7 +20,7 @@ const ITEMS_PER_PAGE = 10
 export function UserList({ className }: UserListProps) {
   const { user: currentUser } = useAuth()
   const { canManageUsers } = usePermissions()
-  const userApi = useUserApi()
+  const userApi = useCrudUserApi()
 
   // 🚀 Query Builder로 대폭 단순화!
   const queryState = useQueryState({
