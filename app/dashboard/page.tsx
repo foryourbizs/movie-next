@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth, usePermissions } from '@/store/auth-store'
-import { useUserApi } from '@/hooks/use-users'
+import { useUserApi } from '@/hooks/use-user-api'
 
 export default function DashboardPage() {
   const { isAuthenticated, user, hydrated } = useAuth()

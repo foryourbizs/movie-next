@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 // Select component 대신 간단한 버튼으로 대체
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useUserApi } from '@/hooks/use-users'
+import { useUserApi } from '@/hooks/use-user-api'
 import { useAuth, usePermissions } from '@/store/auth-store'
 import { cn } from '@/lib/utils'
 import type { CrudQuery } from '@/types/api'

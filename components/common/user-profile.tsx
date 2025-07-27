@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { useUserApi } from '@/hooks/use-users'
-import { useAuthApi } from '@/hooks/use-auth'
+import { useUserApi } from '@/hooks/use-user-api'
+import { useAuthApi } from '@/hooks/use-auth-api'
 import { useAuth } from '@/store/auth-store'
 import { cn } from '@/lib/utils'
 
