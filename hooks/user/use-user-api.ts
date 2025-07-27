@@ -1,10 +1,8 @@
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 
 import { apiUtils } from '@/lib/api'
-import { QUERY_KEYS } from '@/lib/constants'
 import { useCrudUserApi, CrudUserApi } from './use-crud-user-api'
-import type { User, CreateUserRequest, UpdateUserRequest, UserStats } from '@/types/user/user'
-import type { PaginatedResponse } from '@/types/api'
+import type { User } from '@/types/user/user'
 import type { QueryError } from '@/types/query'
 
 /**
