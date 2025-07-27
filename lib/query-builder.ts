@@ -1,4 +1,4 @@
-import type { CrudQuery, CrudFilter } from '@/types/api'
+import type { CrudQuery, CrudFilter } from '@/types/crud'
 
 export class QueryBuilder {
   private query: CrudQuery = {}

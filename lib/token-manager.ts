@@ -2,7 +2,7 @@ import ky from 'ky'
 import toast from 'react-hot-toast'
 
 import { API_CONFIG, API_ENDPOINTS, ERROR_MESSAGES } from '@/lib/constants'
-import type { AuthResponse } from '@/types/api'
+import type { AuthResponse } from '@/types/auth'
 
 /**
  * 토큰 관리 클래스

@@ -2,11 +2,9 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { apiUtils } from '@/lib/api'
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
-import type {
-  User,
-  PaginatedResponse,
-  CrudQuery
-} from '@/types/api'
+import type { User } from '@/types/user'
+import type { PaginatedResponse } from '@/types/api'
+import type { CrudQuery } from '@/types/crud'
 
 /**
  * 쿼리 유틸리티 훅들

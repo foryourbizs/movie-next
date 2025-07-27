@@ -3,15 +3,11 @@ import toast from 'react-hot-toast'
 
 import { apiUtils } from '@/lib/api'
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
-import type {
-  User,
-  UpdateUserRequest,
-  SignUpRequest,
-  PaginatedResponse,
-  CrudQuery,
-  QueryError,
-  MutationOptions
-} from '@/types/api'
+import type { User, UpdateUserRequest } from '@/types/user'
+import type { SignUpRequest } from '@/types/auth'
+import type { PaginatedResponse } from '@/types/api'
+import type { CrudQuery } from '@/types/crud'
+import type { QueryError, MutationOptions } from '@/types/query'
 
 /**
  * 사용자 API 클래스

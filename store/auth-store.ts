@@ -3,7 +3,9 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
 import { tokenManager } from '@/lib/token-manager'
-import type { AuthStore, AuthResponse, User } from '@/types/api'
+import type { AuthStore } from '@/types/store'
+import type { AuthResponse } from '@/types/auth'
+import type { User } from '@/types/user'
 
 /**
  * 인증 상태 관리 스토어

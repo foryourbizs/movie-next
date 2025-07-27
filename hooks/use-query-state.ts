@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { createQuery, QueryBuilder } from '@/lib/query-builder'
-import type { CrudQuery } from '@/types/api'
+import type { CrudQuery } from '@/types/crud'
 
 interface UseQueryStateOptions {
   defaultPage?: number

@@ -406,7 +406,7 @@ export interface UpdatePostRequest {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiUtils } from '@/lib/api'
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
-import type { Post, CreatePostRequest, UpdatePostRequest } from '@/types/api'
+import type { Post, CreatePostRequest, UpdatePostRequest } from '@/types/post'
 
 class PostApi {
   private queryClient = useQueryClient()

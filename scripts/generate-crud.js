@@ -416,7 +416,7 @@ import {
   TableRow 
 } from '@/components/ui/table'
 import { use${entity}Api } from '@/hooks/use-${entityKebab}-api'
-import type { CrudQuery } from '@/types/api'
+import type { CrudQuery } from '@/types/crud'
 ${includeAuth ? "import { useAuth } from '@/hooks/use-auth'" : ''}
 
 const ITEMS_PER_PAGE = 10
