@@ -1,6 +1,6 @@
 # 🚀 Next.js 15 + TypeScript 풀스택 템플릿
 
-> **외주 개발 최적화된 생산성 극대화 템플릿**  
+> **빠른 개발에 최적화된 생산성 극대화 템플릿**  
 > 현대적인 기술 스택과 자동화 도구로 개발 속도를 3-5배 향상시키는 프로덕션 레디 템플릿
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.4.4-black)](https://nextjs.org/)
@@ -10,7 +10,7 @@
 
 ## ✨ 주요 특징
 
-### 🎯 **외주 개발 특화 기능**
+### 🎯 **빠른 개발 특화 기능**
 - **🤖 CRUD 자동 생성**: 새로운 엔티티를 30초 만에 완전한 CRUD로 생성
 - **⚡ 쿼리 빌더**: 복잡한 API 쿼리를 체이닝으로 간편하게 구성
 - **📝 VSCode 스니펫**: 보일러플레이트 코드를 3-5초 만에 자동 생성
@@ -406,7 +406,7 @@ const { theme, setTheme } = useTheme()
 - [🔧 **상세 사용법**](./USAGE-GUIDE.md) - 컴포넌트별 사용 방법
 - [⚡ **개발 속도 가이드**](./SPEED-GUIDE.md) - 생산성 도구 활용법
 
-### **🎯 외주 개발 팁**
+### **🎯 빠른 개발 팁**
 1. **CRUD 생성기로 기본 구조 30초 완성**
 2. **쿼리 빌더로 복잡한 필터링 구현**  
 3. **VSCode 스니펫으로 보일러플레이트 자동화**
@@ -488,55 +488,6 @@ export const usePermissions = () => {
 
 ---
 
-## 🧪 테스트
-
-### **테스트 환경 설정**
-```bash
-# 단위 테스트
-npm run test
-
-# E2E 테스트 (Playwright)
-npm run test:e2e
-
-# 테스트 커버리지
-npm run test:coverage
-```
-
-### **테스트 작성 패턴**
-```typescript
-// __tests__/components/UserList.test.tsx
-import { render, screen } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import UserList from '@/components/common/user-list'
-
-test('사용자 목록이 올바르게 렌더링된다', async () => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } }
-  })
-  
-  render(
-    <QueryClientProvider client={queryClient}>
-      <UserList />
-    </QueryClientProvider>
-  )
-  
-  expect(screen.getByText('사용자 목록')).toBeInTheDocument()
-})
-```
-
----
-
-## 🚀 배포
-
-### **Vercel 배포 (권장)**
-```bash
-# Vercel CLI 설치
-npm i -g vercel
-
-# 프로젝트 배포
-vercel --prod
-```
-
 ### **Docker 배포**
 ```dockerfile
 # Dockerfile
@@ -556,64 +507,3 @@ CMD ["npm", "start"]
 NEXT_PUBLIC_API_BASE_URL=https://api.yourapp.com
 NEXT_PUBLIC_APP_ENV=production
 ```
-
----
-
-## 🤝 기여 가이드
-
-### **개발 워크플로우**
-1. **이슈 생성** - 새로운 기능이나 버그 리포트
-2. **브랜치 생성** - `feature/기능명` 또는 `fix/버그명`
-3. **개발 및 테스트** - 기능 구현 후 테스트 작성
-4. **PR 생성** - 코드 리뷰 요청
-5. **병합** - 승인 후 main 브랜치로 병합
-
-### **코딩 컨벤션**
-- **파일명**: `kebab-case.tsx`
-- **컴포넌트명**: `PascalCase`
-- **함수명**: `camelCase`
-- **상수명**: `UPPER_SNAKE_CASE`
-- **브랜치명**: `feature/기능명` 또는 `fix/버그명`
-
----
-
-## 📄 라이선스
-
-MIT License - 자유롭게 사용, 수정, 배포 가능합니다.
-
----
-
-## 🙋‍♂️ 지원 및 문의
-
-### **문제 해결**
-1. **[이슈 트래커](https://github.com/your-repo/issues)** - 버그 리포트 및 기능 요청
-2. **[위키](https://github.com/your-repo/wiki)** - 상세 문서 및 FAQ
-3. **[디스커션](https://github.com/your-repo/discussions)** - 질문 및 아이디어 공유
-
-### **연락처**
-- **이메일**: your-email@example.com
-- **GitHub**: [@your-username](https://github.com/your-username)
-
----
-
-## 🎉 마무리
-
-이 템플릿으로 **외주 개발 프로젝트의 생산성을 극대화**하세요!
-
-### **개발 시간 단축 예상**
-- **CRUD 개발**: 2-3일 → **30초** ⚡
-- **API 연동**: 1-2일 → **10분** 🚀  
-- **인증 시스템**: 1주일 → **즉시 사용** 🔐
-- **UI 컴포넌트**: 2-3일 → **1시간** 🎨
-
-**총 개발 시간 단축: 70-80% 단축 예상** 📈
-
----
-
-<div align="center">
-
-**⭐ 이 템플릿이 도움이 되었다면 별표를 눌러주세요! ⭐**
-
-[🚀 **지금 시작하기**](#-설치-및-실행) | [📖 **API 가이드**](./README-API.md) | [⚡ **속도 가이드**](./SPEED-GUIDE.md)
-
-</div>
