@@ -19,6 +19,12 @@ export const useAuthStore = create<AuthStore>()(
 
       // 로그인 액션
       login: (response: AuthResponse) => {
+        console.log('🔐 Zustand login action called with response:', {
+          hasAccessToken: !!response.accessToken,
+          hasRefreshToken: !!response.refreshToken,
+          hasUser: !!response.user
+        })
+
         const { accessToken, refreshToken, user } = response
 
         // 토큰 매니저에 토큰 설정
@@ -31,6 +37,8 @@ export const useAuthStore = create<AuthStore>()(
           refreshToken,
           isAuthenticated: true,
         })
+
+        console.log('✅ Zustand store updated with authentication data')
       },
 
       // 로그아웃 액션

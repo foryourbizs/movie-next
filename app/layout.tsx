@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 import { QueryProvider } from "@/providers/query-provider";
+import { TokenMonitorProvider } from "@/providers/token-monitor-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          {children}
+          <TokenMonitorProvider>
+            {children}
+          </TokenMonitorProvider>
           <Toaster
             position="top-right"
             toastOptions={{
