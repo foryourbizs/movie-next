@@ -8,7 +8,16 @@
     "start": "next start",
     "lint": "next lint",
     "generate-crud": "node scripts/generate-crud.js",
-    "validate-env": "node scripts/validate-env.js"
+    "validate-env": "node scripts/validate-env.js",
+    "health": "curl http://localhost:3000/api/health || echo 'Health check failed - make sure server is running'",
+    "health:prod": "curl $RAILWAY_PUBLIC_DOMAIN/api/health || echo 'Production health check failed'",
+    "railway:login": "railway login",
+    "railway:deploy": "railway deploy",
+    "railway:logs": "railway logs",
+    "railway:status": "railway status",
+    "railway:vars": "railway variables",
+    "type-check": "tsc --noEmit",
+    "pre-deploy": "npm run type-check && npm run lint && npm run validate-env"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",

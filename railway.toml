@@ -1,0 +1,112 @@
+# Railway.app 배포 설정 파일
+# Next.js 15 + TypeScript 프로덕션 환경용 설정
+
+[build]
+# Nixpacks 빌더 사용 (Node.js 프로젝트에 최적화)
+builder = "NIXPACKS"
+
+# 빌드 명령어 (Next.js 프로덕션 빌드)
+buildCommand = "npm ci && npm run build"
+
+# 빌드 환경 V2 사용 (최신 환경)
+buildEnvironment = "V2"
+
+# 변경 감지 패턴 (재빌드 트리거)
+watchPatterns = [
+  "app/**/*",
+  "components/**/*",
+  "lib/**/*",
+  "hooks/**/*",
+  "types/**/*",
+  "providers/**/*",
+  "store/**/*",
+  "public/**/*",
+  "package.json",
+  "package-lock.json",
+  "next.config.ts",
+  "tsconfig.json",
+  "tailwind.config.ts"
+]
+
+[deploy]
+# Next.js 시작 명령어
+startCommand = "npm start"
+
+# 프로덕션 환경에서 최소 2개 인스턴스 실행 (가용성 확보)
+numReplicas = 2
+
+# 헬스체크 설정
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+
+# 애플리케이션이 비활성 상태일 때 슬립 모드 비활성화 (프로덕션)
+sleepApplication = false
+
+# V2 런타임 사용 (최신 런타임)
+runtime = "V2"
+
+# 실패 시 항상 재시작
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# 리소스 제한 설정 (프로덕션 사양)
+[deploy.limitOverride.containers]
+# 2 vCPU
+cpu = 2.0
+# 4GB RAM
+memoryBytes = 4294967296
+# 10GB 디스크
+diskBytes = 10737418240
+
+# 배포 오버랩 설정 (무중단 배포)
+overlapSeconds = 10
+drainingSeconds = 30
+
+# 환경별 설정
+[environments.production]
+[environments.production.build]
+buildCommand = "npm ci --only=production && npm run build"
+
+[environments.production.deploy]
+# 프로덕션에서는 더 많은 인스턴스 실행
+numReplicas = 3
+
+# 프로덕션용 헬스체크 (더 짧은 타임아웃)
+healthcheckTimeout = 15
+
+# 프로덕션 리소스 제한
+[environments.production.deploy.limitOverride.containers]
+cpu = 4.0
+memoryBytes = 8589934592
+diskBytes = 21474836480
+
+[environments.staging]
+[environments.staging.build]
+buildCommand = "npm ci && npm run build"
+
+[environments.staging.deploy]
+# 스테이징은 1개 인스턴스로 충분
+numReplicas = 1
+
+# 스테이징용 리소스 제한
+[environments.staging.deploy.limitOverride.containers]
+cpu = 1.0
+memoryBytes = 2147483648
+diskBytes = 5368709120
+
+[environments.development]
+[environments.development.build]
+buildCommand = "npm ci && npm run build"
+
+[environments.development.deploy]
+# 개발 환경은 1개 인스턴스
+numReplicas = 1
+
+# 개발 환경에서는 슬립 모드 허용 (비용 절약)
+sleepApplication = true
+
+# 개발용 리소스 제한
+[environments.development.deploy.limitOverride.containers]
+cpu = 0.5
+memoryBytes = 1073741824
+diskBytes = 2684354560 
