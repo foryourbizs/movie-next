@@ -544,7 +544,7 @@ import type { QueryError, MutationOptions } from '@/types/query'
  * 백엔드에서 허용된 메서드: ${allowedMethods.join(', ')}
  */
 export class Crud${entity}Api {
-  private readonly baseUrl = '/api/v1/${entityPluralKebab}'
+  private readonly baseUrl = '${entityPluralKebab}'
 
   constructor(
     private queryClient: ReturnType<typeof useQueryClient>

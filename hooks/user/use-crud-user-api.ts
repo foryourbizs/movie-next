@@ -17,7 +17,7 @@ import type { QueryError, MutationOptions } from '@/types/query'
  * 백엔드에서 허용된 메서드: index, show
  */
 export class CrudUserApi {
-  private readonly baseUrl = '/api/v1/users'
+  private readonly baseUrl = 'users'
 
   constructor(
     private queryClient: ReturnType<typeof useQueryClient>
