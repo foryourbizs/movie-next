@@ -29,7 +29,6 @@ export const useTokenMonitor = () => {
               await tokenManager.refreshAccessToken()
             } catch (error) {
               console.error('Token refresh failed:', error)
-              // 갱신 실패 시 로그아웃 처리는 handleUnauthorizedError에서 처리됨
             }
           }
         }
