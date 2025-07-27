@@ -171,6 +171,6 @@ export const usePermissions = () => {
     isSocialUser: user?.provider !== 'local',
 
     // 활성 사용자인지 확인
-    isActiveUser: user?.isActive === true,
+    isActiveUser: true,
   }
 } 

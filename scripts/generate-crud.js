@@ -4,6 +4,32 @@ const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
 
+// .env 파일 로드 시도
+try {
+  const envFiles = ['.env.local', '.env']
+  for (const envFile of envFiles) {
+    const envPath = path.join(__dirname, '..', envFile)
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8')
+      envContent.split('\n').forEach(line => {
+        const cleanLine = line.trim()
+        if (cleanLine && !cleanLine.startsWith('#')) {
+          const [key, ...valueParts] = cleanLine.split('=')
+          if (key && valueParts.length > 0) {
+            const value = valueParts.join('=').trim()
+            if (!process.env[key]) {
+              process.env[key] = value
+            }
+          }
+        }
+      })
+      break // 첫 번째로 찾은 파일만 사용
+    }
+  }
+} catch (error) {
+  // .env 파일 로드 실패는 무시
+}
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -78,7 +104,7 @@ function getTypeScriptType(column) {
 async function fetchSchemaFromAPI(entityName) {
   try {
     // 환경변수 또는 기본값으로 API URL 설정
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
     const url = `${baseUrl}/api/v1/schema/${entityName.toLowerCase()}`
 
     console.log(`🔍 스키마 정보 조회 중: ${url}`)
@@ -195,8 +221,8 @@ async function generateCRUD() {
 
     console.log(`\n✅ ${entity} CRUD 생성 완료!`)
     console.log(`\n📁 생성된 파일들:`)
-    console.log(`   - types/${entityLower}.ts`)
-    console.log(`   - hooks/use-${entityKebab}-api.ts`)
+    console.log(`   - types/crud-${entityLower}.ts`)
+    console.log(`   - hooks/use-crud-${entityKebab}-api.ts`)
     console.log(`\n🎯 사용법:`)
     console.log(`   const ${entityLower}Api = use${entity}Api()`)
     console.log(`   const { data } = ${entityLower}Api.index() // 목록 조회`)
@@ -286,7 +312,7 @@ ${fields
 }
 `
 
-  const filePath = `types/${entityLower}.ts`
+  const filePath = `types/crud-${entityLower}.ts`
   await fs.promises.writeFile(filePath, typeContent)
   console.log(`✅ 타입 정의 생성: ${filePath}`)
 }
@@ -314,7 +340,10 @@ async function generateApiHook(entity, entityLower, entityKebab, entityPlural, e
   index = (query?: CrudQuery, options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
     return useQuery({
       queryKey: [...QUERY_KEYS.${entityLower.toUpperCase()}.lists(), query],
-      queryFn: () => apiUtils.get(API_ENDPOINTS.${entityLower.toUpperCase()}, { query }),
+      queryFn: () => {
+        const queryString = query ? \`?\${apiUtils.buildCrudQuery(query as Record<string, unknown>)}\` : ''
+        return apiUtils.get<PaginatedResponse<${entity}>>(\`\${this.baseUrl}\${queryString}\`)
+      },
       ...options,
     })
   }`)
@@ -327,7 +356,7 @@ async function generateApiHook(entity, entityLower, entityKebab, entityPlural, e
   show = (id: string, options?: UseQueryOptions<${entity}>) => {
     return useQuery({
       queryKey: [...QUERY_KEYS.${entityLower.toUpperCase()}.detail(id)],
-      queryFn: () => apiUtils.get(\`\${API_ENDPOINTS.${entityLower.toUpperCase()}}/\${id}\`),
+      queryFn: () => apiUtils.get<${entity}>(\`\${this.baseUrl}/\${id}\`),
       enabled: !!id,
       ...options,
     })
@@ -341,7 +370,7 @@ async function generateApiHook(entity, entityLower, entityKebab, entityPlural, e
   create = (options?: MutationOptions<${entity}, Create${entity}Request>) => {
     return useMutation({
       mutationFn: (data: Create${entity}Request) =>
-        apiUtils.post(API_ENDPOINTS.${entityLower.toUpperCase()}, data),
+        apiUtils.post<${entity}>(this.baseUrl, data),
       onSuccess: (data, variables) => {
         ${methods.index ? `this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.lists() })` : ''}
         toast.success('${entity}가 생성되었습니다.')
@@ -363,7 +392,7 @@ async function generateApiHook(entity, entityLower, entityKebab, entityPlural, e
   update = (id: string, options?: MutationOptions<${entity}, Update${entity}Request>) => {
     return useMutation({
       mutationFn: (data: Update${entity}Request) =>
-        apiUtils.put(\`\${API_ENDPOINTS.${entityLower.toUpperCase()}}/\${id}\`, data),
+        apiUtils.put<${entity}>(\`\${this.baseUrl}/\${id}\`, data),
       onSuccess: (data, variables) => {
         ${methods.index ? `this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.lists() })` : ''}
         ${methods.show ? `this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.detail(id) })` : ''}
@@ -385,7 +414,7 @@ async function generateApiHook(entity, entityLower, entityKebab, entityPlural, e
    */
   destroy = (id: string, options?: MutationOptions<void, string>) => {
     return useMutation({
-      mutationFn: () => apiUtils.delete(\`\${API_ENDPOINTS.${entityLower.toUpperCase()}}/\${id}\`),
+      mutationFn: () => apiUtils.delete<void>(\`\${this.baseUrl}/\${id}\`),
       onSuccess: (data, variables) => {
         ${methods.index ? `this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.lists() })` : ''}
         ${methods.show ? `this.queryClient.removeQueries({ queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.detail(id) })` : ''}
@@ -405,7 +434,7 @@ async function generateApiHook(entity, entityLower, entityKebab, entityPlural, e
 import toast from 'react-hot-toast'
 
 import { apiUtils } from '@/lib/api'
-import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
+import { QUERY_KEYS } from '@/lib/constants'
 import type { ${entity}, Create${entity}Request, Update${entity}Request } from '@/types/${entityLower}'
 import type { PaginatedResponse } from '@/types/api'
 import type { CrudQuery } from '@/types/crud'
@@ -417,6 +446,8 @@ import type { QueryError, MutationOptions } from '@/types/query'
  * 백엔드에서 허용된 메서드: ${allowedMethods.join(', ')}
  */
 export class ${entity}Api {
+  private readonly baseUrl = '/api/v1/${entityPluralKebab}'
+
   constructor(
     private queryClient: ReturnType<typeof useQueryClient>
   ) {}
@@ -434,7 +465,7 @@ export function use${entity}Api() {
 }
 `
 
-  const filePath = `hooks/use-${entityKebab}-api.ts`
+  const filePath = `hooks/use-crud-${entityKebab}-api.ts`
   await fs.promises.writeFile(filePath, hookContent)
   console.log(`✅ API 훅 생성: ${filePath}`)
 }
@@ -445,18 +476,7 @@ async function updateConstants(entity, entityLower, entityPlural, entityPluralKe
   try {
     let content = await fs.promises.readFile(constantsPath, 'utf8')
 
-    // API_ENDPOINTS 업데이트
-    const endpointsRegex = /export const API_ENDPOINTS = \{([^}]+)\}/s
-    const endpointsMatch = content.match(endpointsRegex)
-
-    if (endpointsMatch) {
-      const endpointsContent = endpointsMatch[1]
-      if (!endpointsContent.includes(`${entityLower.toUpperCase()}:`)) {
-        const newEndpoint = `  ${entityLower.toUpperCase()}: '${entityPluralKebab}',`
-        const updatedEndpoints = endpointsContent.trim() + '\n' + newEndpoint
-        content = content.replace(endpointsRegex, `export const API_ENDPOINTS = {\n${updatedEndpoints}\n}`)
-      }
-    }
+    // API_ENDPOINTS는 더 이상 사용하지 않으므로 업데이트하지 않습니다.
 
     // QUERY_KEYS 업데이트
     const queryKeysRegex = /export const QUERY_KEYS = \{([^}]+)\}/s

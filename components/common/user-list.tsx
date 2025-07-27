@@ -30,9 +30,6 @@ export function UserList({ className }: UserListProps) {
 
   // 사용자 목록 조회
   const { data: usersData, isLoading, error } = userApi.index(queryState.query)
-  
-  // 사용자 삭제 뮤테이션
-  const deleteMutation = userApi.destroy()
 
   // 총 페이지 수 계산
   const totalPages = usersData ? Math.ceil(usersData.metadata.pagination.total / queryState.limit) : 0
@@ -45,12 +42,6 @@ export function UserList({ className }: UserListProps) {
         </CardContent>
       </Card>
     )
-  }
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('정말로 삭제하시겠습니까?')) {
-      deleteMutation.mutate(id)
-    }
   }
 
   // 권한 체크
@@ -176,24 +167,11 @@ export function UserList({ className }: UserListProps) {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                            {user.isActive ? '활성' : '비활성'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
                           {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                         </TableCell>
                         <TableCell className="text-right space-x-2">
                           <Button variant="outline" size="sm">
                             수정
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(user.id)}
-                            disabled={deleteMutation.isPending || user.id === currentUser?.id}
-                          >
-                            삭제
                           </Button>
                         </TableCell>
                       </TableRow>

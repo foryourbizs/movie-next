@@ -24,9 +24,7 @@ export default function DashboardPage() {
   const userApi = useUserApi()
 
   // 🚀 모든 훅을 조건부 렌더링 이전에 호출!
-  const { data: currentUser, isLoading } = userApi.me({
-    enabled: hydrated && isAuthenticated, // 조건부 실행
-  })
+  const { data: currentUser, isLoading } = userApi.show(user?.id || '')
 
   // 하이드레이션이 완료되지 않았으면 로딩 표시
   if (!hydrated) {
@@ -77,33 +75,6 @@ export default function DashboardPage() {
       color: 'bg-purple-500',
       available: canManageUsers,
     },
-    {
-      title: '시스템 설정',
-      description: '시스템 전반 설정 관리',
-      href: '/settings',
-      icon: Settings,
-      color: 'bg-gray-500',
-      available: canManageUsers,
-      disabled: true, // 개발 예정
-    },
-    {
-      title: '통계 & 분석',
-      description: '사용 현황 및 통계 보기',
-      href: '/analytics',
-      icon: BarChart3,
-      color: 'bg-orange-500',
-      available: canManageUsers,
-      disabled: true, // 개발 예정
-    },
-    {
-      title: '문서 관리',
-      description: '문서 및 파일 관리',
-      href: '/documents',
-      icon: FileText,
-      color: 'bg-indigo-500',
-      available: true,
-      disabled: true, // 개발 예정
-    },
   ]
 
   return (
@@ -126,26 +97,8 @@ export default function DashboardPage() {
               return (
                 <Card 
                   key={item.href}
-                  className={`transition-all duration-200 hover:shadow-lg ${
-                    item.disabled 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'hover:scale-105 cursor-pointer'
-                  }`}
+                  className={`transition-all duration-200 hover:shadow-lg hover:scale-105 cursor-pointer`}
                 >
-                  {item.disabled ? (
-                    <div className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-3 rounded-lg ${item.color} text-white`}>
-                          <Icon size={24} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-400">{item.title}</h3>
-                          <p className="text-sm text-gray-400 mt-1">{item.description}</p>
-                          <p className="text-xs text-orange-500 mt-2">개발 예정</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
                     <Link href={item.href}>
                       <div className="p-6 hover:bg-gray-50 transition-colors">
                         <div className="flex items-center justify-between">
@@ -162,7 +115,6 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </Link>
-                  )}
                 </Card>
               )
             })}

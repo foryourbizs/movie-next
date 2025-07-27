@@ -33,14 +33,7 @@ export function UserProfile({ className }: UserProfileProps) {
   const authApi = useAuthApi()
 
   // 현재 사용자 정보 조회
-  const { data: currentUser, isLoading } = userApi.me()
-
-  // 프로필 업데이트 뮤테이션
-  const updateMeMutation = userApi.updateMe({
-    onSuccess: () => {
-      setIsEditing(false)
-    },
-  })
+  const { data: currentUser, isLoading } = userApi.show(user?.id || '')
 
   // 로그아웃 뮤테이션
   const logoutMutation = authApi.logout({
@@ -66,10 +59,6 @@ export function UserProfile({ className }: UserProfileProps) {
       })
     }
   }, [currentUser, form])
-
-  const onSubmit = (data: UpdateProfileFormData) => {
-    updateMeMutation.mutate(data)
-  }
 
   const handleLogout = () => {
     if (confirm('로그아웃하시겠습니까?')) {
@@ -145,7 +134,7 @@ export function UserProfile({ className }: UserProfileProps) {
         ) : (
           // 프로필 수정 모드
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -172,9 +161,6 @@ export function UserProfile({ className }: UserProfileProps) {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={updateMeMutation.isPending} className="w-full">
-                {updateMeMutation.isPending ? '저장 중...' : '저장'}
-              </Button>
             </form>
           </Form>
         )}

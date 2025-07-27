@@ -12,14 +12,15 @@ export const API_CONFIG = {
 
 // API 엔드포인트
 export const API_ENDPOINTS = {
-  // 인증 관련
+// 인증 관련
   AUTH: {
     SIGN_UP: 'auth/sign/up',
     SIGN_IN: 'auth/sign/in',
     SIGN_OUT: 'auth/sign/out',
     REFRESH: 'auth/sign/refresh',
     ME: 'auth/me',
-  },
+  USER: 'users',
+},
 
   // 소셜 로그인
   SOCIAL: {
@@ -72,4 +73,11 @@ export const QUERY_KEYS = {
   USER_BY_ID: (id: string) => ['users', id] as const,
   USER_ME: ['users', 'me'] as const,
   AUTH: ['auth'] as const,
+  USER: {
+    all: ['user'] as const,
+    lists: () => [...QUERY_KEYS.USER.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) => [...QUERY_KEYS.USER.lists(), filters] as const,
+    details: () => [...QUERY_KEYS.USER.all, 'detail'] as const,
+    detail: (id: string) => [...QUERY_KEYS.USER.details(), id] as const,
+  },
 } as const 
