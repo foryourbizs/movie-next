@@ -7,7 +7,8 @@
 ```
 lib/
 ├── constants.ts     # API 엔드포인트 및 상수 정의
-├── api.ts          # ky 클라이언트 설정 및 토큰 관리
+├── api.ts          # ky HTTP 클라이언트 설정 (순수 HTTP 기능)
+└── token-manager.ts # JWT 토큰 관리 및 인증 로직
 
 types/
 └── api.ts          # API 관련 타입 정의
@@ -25,14 +26,27 @@ providers/
 └── query-provider.tsx # React Query Provider
 ```
 
-### 📚 훅 구조 개선사항
+### 📚 구조 개선사항
 
+#### 1. **훅 파일 분리**
 백엔드 route가 늘어날수록 `use-api.ts` 파일이 커지지 않도록 **도메인별로 분리**했습니다:
 
 - **`use-auth.ts`**: 인증 관련 (로그인, 회원가입, 로그아웃, 토큰 갱신)
 - **`use-users.ts`**: 사용자 관리 (목록 조회, 생성, 수정, 삭제)
 - **`use-query-utils.ts`**: 공통 유틸리티 (쿼리 무효화, 프리페치)
 - **`use-api.ts`**: 통합 export (기존 import 경로 유지)
+
+#### 2. **인증 로직 분리**
+관심사 분리를 위해 HTTP 클라이언트와 인증 로직을 분리했습니다:
+
+- **`lib/api.ts`**: 순수 HTTP 클라이언트 기능만 (GET, POST, PUT, PATCH, DELETE)
+- **`lib/token-manager.ts`**: JWT 토큰 관리, 자동 갱신, 인증 상태 처리
+
+**장점**:
+- 🔍 **명확한 책임 분리**: HTTP 통신 vs 인증 관리
+- 🛠️ **유지보수성 향상**: 각 기능을 독립적으로 수정 가능
+- 🔄 **재사용성 증가**: 토큰 관리자를 다른 HTTP 클라이언트에서도 사용 가능
+- 📝 **테스트 용이성**: 각 모듈을 독립적으로 테스트 가능
 
 ### 새로운 도메인 추가 시:
 
@@ -233,24 +247,26 @@ export function CacheManagement() {
 
 ```tsx
 import { apiUtils } from '@/lib/api'
+import { tokenManager } from '@/lib/token-manager'
 import type { User } from '@/types/api'
 
-// GET 요청
+// HTTP 클라이언트 사용 (lib/api.ts)
 const users = await apiUtils.get<User[]>('/users')
-
-// POST 요청
 const newUser = await apiUtils.post<User>('/users', {
   name: '홍길동',
   email: 'hong@example.com'
 })
 
-// PUT 요청
-const updatedUser = await apiUtils.put<User>(`/users/${userId}`, {
-  name: '김철수'
-})
+// 토큰 관리 (lib/token-manager.ts)
+const isExpired = tokenManager.isTokenExpired()
+const isExpiringSoon = tokenManager.isTokenExpiringSoon()
 
-// DELETE 요청
-await apiUtils.delete(`/users/${userId}`)
+// 수동 토큰 갱신
+try {
+  await tokenManager.refreshAccessToken()
+} catch (error) {
+  console.error('Token refresh failed:', error)
+}
 ```
 
 ## 🔍 고급 사용법

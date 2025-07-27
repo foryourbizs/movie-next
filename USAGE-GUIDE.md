@@ -263,6 +263,10 @@ const { data: users } = useUsers(emailQuery)
 백엔드 route가 늘어날수록 `use-api.ts` 파일이 커지지 않도록 **도메인별로 분리**했습니다:
 
 ```
+lib/
+├── api.ts            # 순수 HTTP 클라이언트 (GET, POST, PUT, PATCH, DELETE)
+└── token-manager.ts  # JWT 토큰 관리 및 인증 로직
+
 hooks/
 ├── use-api.ts         # 통합 export (기존 호환성 유지)
 ├── use-auth.ts        # 인증 관련 훅들

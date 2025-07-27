@@ -27,8 +27,7 @@ export const useLogin = (options?: MutationOptions<AuthResponse, LoginRequest>) 
       const authResponse = await apiUtils.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGN_IN, data)
 
       // 토큰을 임시로 설정하여 /users/me API 호출이 가능하도록 함
-      console.log('🔐 Login response received, setting tokens...')
-      const { tokenManager } = await import('@/lib/api')
+      const { tokenManager } = await import('@/lib/token-manager')
       tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken)
 
       // 사용자 정보 가져오기
@@ -68,7 +67,7 @@ export const useSignUp = (options?: MutationOptions<AuthResponse, SignUpRequest>
       const authResponse = await apiUtils.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGN_UP, data)
 
       // 토큰을 임시로 설정하여 /users/me API 호출이 가능하도록 함
-      const { tokenManager } = await import('@/lib/api')
+      const { tokenManager } = await import('@/lib/token-manager')
       tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken)
 
       // 사용자 정보 가져오기

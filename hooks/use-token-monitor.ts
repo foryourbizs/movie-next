@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { tokenManager } from '@/lib/api'
+import { tokenManager } from '@/lib/token-manager'
 import { useAuth } from '@/store/auth-store'
 
 /**
@@ -24,11 +24,9 @@ export const useTokenMonitor = () => {
       try {
         // 토큰이 만료되었다면
         if (tokenManager.isTokenExpired()) {
-          console.log('Token expired, attempting refresh...')
           if (tokenManager.getRefreshToken()) {
             try {
               await tokenManager.refreshAccessToken()
-              console.log('Token successfully refreshed')
             } catch (error) {
               console.error('Token refresh failed:', error)
               // 갱신 실패 시 로그아웃 처리는 handleUnauthorizedError에서 처리됨
@@ -37,11 +35,9 @@ export const useTokenMonitor = () => {
         }
         // 토큰이 곧 만료될 예정이라면 미리 갱신
         else if (tokenManager.isTokenExpiringSoon()) {
-          console.log('Token expiring soon, proactive refresh...')
           if (tokenManager.getRefreshToken()) {
             try {
               await tokenManager.refreshAccessToken()
-              console.log('Token proactively refreshed')
             } catch (error) {
               console.error('Proactive token refresh failed:', error)
             }
@@ -72,7 +68,6 @@ export const useTokenMonitor = () => {
       if (isAuthenticated && tokenManager.isTokenExpiringSoon()) {
         try {
           await tokenManager.refreshAccessToken()
-          console.log('Token refreshed on page focus')
         } catch (error) {
           console.error('Token refresh on focus failed:', error)
         }
