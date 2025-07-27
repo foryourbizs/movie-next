@@ -1,9 +1,11 @@
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 
 import { apiUtils } from '@/lib/api'
+import { QUERY_KEYS } from '@/lib/constants'
 import { useCrudUserApi, CrudUserApi } from './use-crud-user-api'
 import type { User, CreateUserRequest, UpdateUserRequest, UserStats } from '@/types/user/user'
 import type { PaginatedResponse } from '@/types/api'
+import type { QueryError } from '@/types/query'
 
 /**
  * User API 훅 (확장 가능)
@@ -11,40 +13,16 @@ import type { PaginatedResponse } from '@/types/api'
  * 이 파일은 자동 생성되지 않습니다. 커스텀 메서드를 여기에 추가하세요.
  */
 export class UserApi extends CrudUserApi {
-  /**
-   * 커스텀 메서드 예시: 활성 사용자만 조회
-   * 
-   * 아래 주석을 해제하고 필요에 맞게 수정하세요:
-   */
-
-  /*
-  getActiveUsers = (options?: UseQueryOptions<PaginatedResponse<User>>) => {
-    return this.index({ 
-      filter: { isActive: true } 
-    }, options)
-  }
-
-  getInactiveUsers = (options?: UseQueryOptions<PaginatedResponse<User>>) => {
-    return this.index({ 
-      filter: { isActive: false } 
-    }, options)
-  }
-
-  searchByUserName = (name: string, options?: UseQueryOptions<PaginatedResponse<User>>) => {
-    return this.index({ 
-      filter: { name_like: name } 
-    }, options)
-  }
-
-  getUserStats = () => {
+  useMe = (options?: Omit<UseQueryOptions<User, QueryError>, 'queryKey' | 'queryFn'>) => {
     return useQuery({
-      queryKey: ['user', 'stats'],
-      queryFn: () => apiUtils.get<UserStats>(`${this.baseUrl}/stats`),
+      queryKey: [...QUERY_KEYS.USER.details(), 'me'],
+      queryFn: async (): Promise<User> => {
+        return apiUtils.get<User>(`${this.baseUrl}/me`)
+      },
+      staleTime: 5 * 60 * 1000, // 5분
+      ...options,
     })
   }
-  */
-
-  // 여기에 커스텀 메서드들을 추가하세요...
 }
 
 /**

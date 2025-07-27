@@ -149,7 +149,7 @@ async function fetchSchemaFromAPI(entityName) {
 async function generateCRUD() {
   try {
     const entityName = await new Promise((resolve) => {
-      rl.question('🎯 생성할 엔티티명을 입력하세요 (예: User, Product, Order): ', resolve)
+      rl.question('🎯 생성할 엔티티명을 입력하세요 (예: user, product, order): ', resolve)
     })
 
     // 1. 스키마 API에서 정보 가져오기 시도
@@ -544,7 +544,7 @@ import type { QueryError, MutationOptions } from '@/types/query'
  * 백엔드에서 허용된 메서드: ${allowedMethods.join(', ')}
  */
 export class Crud${entity}Api {
-  private readonly baseUrl = '${entityPluralKebab}'
+  protected readonly baseUrl = '${entityPluralKebab}'
 
   constructor(
     private queryClient: ReturnType<typeof useQueryClient>
