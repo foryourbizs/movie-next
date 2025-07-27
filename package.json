@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-crud": "node scripts/generate-crud.js"
+    "generate-crud": "node scripts/generate-crud.js",
+    "validate-env": "node scripts/validate-env.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",

@@ -5,7 +5,34 @@ import { API_CONFIG, API_ENDPOINTS, ERROR_MESSAGES } from '@/lib/constants'
 import type { AuthResponse } from '@/types/auth'
 
 /**
- * 토큰 관리 클래스
+ * 간단한 토큰 암호화/복호화 (기본 보안)
+ */
+class TokenCrypto {
+  private static readonly key = 'your-app-secret-key-2024' // production에서는 환경변수로 관리
+
+  static encrypt(text: string): string {
+    try {
+      // 간단한 Base64 인코딩 (실제로는 더 강력한 암호화 사용 권장)
+      const encoded = btoa(encodeURIComponent(text + '|' + Date.now()))
+      return encoded
+    } catch {
+      return text
+    }
+  }
+
+  static decrypt(encryptedText: string): string | null {
+    try {
+      const decoded = decodeURIComponent(atob(encryptedText))
+      const [text] = decoded.split('|')
+      return text
+    } catch {
+      return null
+    }
+  }
+}
+
+/**
+ * 보안 강화된 토큰 관리 클래스
  */
 export class TokenManager {
   private static instance: TokenManager
@@ -14,11 +41,64 @@ export class TokenManager {
   private isRefreshing = false
   private refreshPromise: Promise<string> | null = null
 
+  // 보안 설정
+  private readonly useSessionStorage: boolean
+  private readonly encryptTokens: boolean
+
+  constructor() {
+    // production 환경에서는 sessionStorage와 암호화 사용
+    this.useSessionStorage = process.env.NODE_ENV === 'production'
+    this.encryptTokens = process.env.NODE_ENV === 'production'
+  }
+
   static getInstance(): TokenManager {
     if (!TokenManager.instance) {
       TokenManager.instance = new TokenManager()
     }
     return TokenManager.instance
+  }
+
+  private getStorage(): Storage {
+    if (typeof window === 'undefined') return {} as Storage
+    return this.useSessionStorage ? sessionStorage : localStorage
+  }
+
+  private setSecureItem(key: string, value: string): void {
+    if (typeof window === 'undefined') return
+
+    try {
+      const storage = this.getStorage()
+      const finalValue = this.encryptTokens ? TokenCrypto.encrypt(value) : value
+      storage.setItem(key, finalValue)
+    } catch (error) {
+      console.warn('Failed to store token securely:', error)
+    }
+  }
+
+  private getSecureItem(key: string): string | null {
+    if (typeof window === 'undefined') return null
+
+    try {
+      const storage = this.getStorage()
+      const storedValue = storage.getItem(key)
+      if (!storedValue) return null
+
+      return this.encryptTokens ? TokenCrypto.decrypt(storedValue) : storedValue
+    } catch (error) {
+      console.warn('Failed to retrieve token securely:', error)
+      return null
+    }
+  }
+
+  private removeSecureItem(key: string): void {
+    if (typeof window === 'undefined') return
+
+    try {
+      const storage = this.getStorage()
+      storage.removeItem(key)
+    } catch (error) {
+      console.warn('Failed to remove token securely:', error)
+    }
   }
 
   // 토큰 설정
@@ -28,16 +108,15 @@ export class TokenManager {
       this.refreshToken = refreshToken
     }
 
-    // localStorage에 저장
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', accessToken)
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken)
-      }
-      // 토큰 만료 시간도 저장 (JWT는 보통 1시간, 여유분 5분을 빼고 55분으로 설정)
-      const expiryTime = Date.now() + (55 * 60 * 1000)
-      localStorage.setItem('tokenExpiry', expiryTime.toString())
+    // 보안 강화된 저장
+    this.setSecureItem('accessToken', accessToken)
+    if (refreshToken) {
+      this.setSecureItem('refreshToken', refreshToken)
     }
+
+    // 토큰 만료 시간 저장 (JWT는 보통 1시간, 여유분 5분을 빼고 55분으로 설정)
+    const expiryTime = Date.now() + (55 * 60 * 1000)
+    this.setSecureItem('tokenExpiry', expiryTime.toString())
   }
 
   // 토큰 가져오기
@@ -46,14 +125,10 @@ export class TokenManager {
       return this.accessToken
     }
 
-    // localStorage에서 토큰 복원
-    if (typeof window !== 'undefined') {
-      this.accessToken = localStorage.getItem('accessToken')
-      this.refreshToken = localStorage.getItem('refreshToken')
-      return this.accessToken
-    }
-
-    return null
+    // 보안 강화된 복원
+    this.accessToken = this.getSecureItem('accessToken')
+    this.refreshToken = this.getSecureItem('refreshToken')
+    return this.accessToken
   }
 
   getRefreshToken(): string | null {
@@ -61,12 +136,8 @@ export class TokenManager {
       return this.refreshToken
     }
 
-    if (typeof window !== 'undefined') {
-      this.refreshToken = localStorage.getItem('refreshToken')
-      return this.refreshToken
-    }
-
-    return null
+    this.refreshToken = this.getSecureItem('refreshToken')
+    return this.refreshToken
   }
 
   // 토큰 제거
@@ -74,20 +145,15 @@ export class TokenManager {
     this.accessToken = null
     this.refreshToken = null
 
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('tokenExpiry')
-    }
+    // 보안 강화된 제거
+    this.removeSecureItem('accessToken')
+    this.removeSecureItem('refreshToken')
+    this.removeSecureItem('tokenExpiry')
   }
 
   // 토큰 만료 체크
   isTokenExpired(): boolean {
-    if (typeof window === 'undefined') {
-      return false
-    }
-
-    const expiryTime = localStorage.getItem('tokenExpiry')
+    const expiryTime = this.getSecureItem('tokenExpiry')
     if (!expiryTime) {
       return true // 만료 시간이 없으면 만료된 것으로 간주
     }
@@ -97,11 +163,7 @@ export class TokenManager {
 
   // 토큰 만료가 임박했는지 체크 (5분 이내)
   isTokenExpiringSoon(): boolean {
-    if (typeof window === 'undefined') {
-      return false
-    }
-
-    const expiryTime = localStorage.getItem('tokenExpiry')
+    const expiryTime = this.getSecureItem('tokenExpiry')
     if (!expiryTime) {
       return true
     }
@@ -164,6 +226,26 @@ export class TokenManager {
       console.error('Token refresh failed:', error)
       throw new Error('Token refresh failed')
     }
+  }
+
+  // 보안 상태 검증
+  validateSecurityState(): boolean {
+    const accessToken = this.getAccessToken()
+    const refreshToken = this.getRefreshToken()
+
+    // 토큰이 있지만 만료된 경우
+    if (accessToken && this.isTokenExpired()) {
+      console.warn('Access token is expired')
+      return false
+    }
+
+    // refresh token이 없는 경우
+    if (accessToken && !refreshToken) {
+      console.warn('Missing refresh token')
+      return false
+    }
+
+    return true
   }
 }
 

@@ -1,46 +1,16 @@
 import ky, { type KyInstance, type Options, HTTPError } from 'ky'
-import toast from 'react-hot-toast'
 
-import { API_CONFIG, HTTP_STATUS, ERROR_MESSAGES } from '@/lib/constants'
+import { API_CONFIG, HTTP_STATUS } from '@/lib/constants'
 import { tokenManager, handleUnauthorizedError } from '@/lib/token-manager'
+import { ErrorHandler, type ErrorHandlingOptions } from '@/lib/error-handler'
+import { RequestDeduplicator, createRequestKey } from '@/lib/request-deduplicator'
 import type { ApiError } from '@/types/api'
 
 /**
- * API 에러 처리 함수
+ * API 에러 처리 함수 (새로운 에러 핸들링 시스템 사용)
  */
-function handleApiError(error: unknown): never {
-  console.error('API Error:', error)
-
-  // ky HTTPError 처리
-  if (error && typeof error === 'object' && 'response' in error) {
-    const httpError = error as { response: Response; message: string }
-    const status = httpError.response.status
-
-    switch (status) {
-      case HTTP_STATUS.UNAUTHORIZED:
-        toast.error(ERROR_MESSAGES.UNAUTHORIZED)
-        // 인증 실패 시 토큰 제거하고 로그인 페이지로 리디렉션
-        handleUnauthorizedError()
-        break
-      case HTTP_STATUS.FORBIDDEN:
-        toast.error(ERROR_MESSAGES.FORBIDDEN)
-        break
-      case HTTP_STATUS.NOT_FOUND:
-        toast.error(ERROR_MESSAGES.NOT_FOUND)
-        break
-      case HTTP_STATUS.UNPROCESSABLE_ENTITY:
-        toast.error(ERROR_MESSAGES.VALIDATION_ERROR)
-        break
-      case HTTP_STATUS.INTERNAL_SERVER_ERROR:
-        toast.error(ERROR_MESSAGES.SERVER_ERROR)
-        break
-      default:
-        toast.error(ERROR_MESSAGES.NETWORK_ERROR)
-    }
-  } else {
-    toast.error(ERROR_MESSAGES.NETWORK_ERROR)
-  }
-
+async function handleApiError(error: unknown, options?: ErrorHandlingOptions): Promise<never> {
+  await ErrorHandler.handle(error, options)
   throw error
 }
 
@@ -136,52 +106,126 @@ function createApiClient(): KyInstance {
 // API 클라이언트 인스턴스
 export const api = createApiClient()
 
+// 요청 옵션 확장 타입
+interface ExtendedOptions extends Options {
+  errorOptions?: ErrorHandlingOptions
+  deduplication?: {
+    enabled?: boolean
+    key?: string
+  }
+}
+
 /**
  * API 유틸리티 함수들
  */
 export const apiUtils = {
   // GET 요청
-  async get<T>(url: string, options?: Options): Promise<T> {
+  async get<T>(url: string, options?: ExtendedOptions): Promise<T> {
+    const { deduplication, errorOptions, ...kyOptions } = options || {}
+
+    const requestFn = async (signal: AbortSignal) => {
+      return await api.get(url, { ...kyOptions, signal }).json<T>()
+    }
+
     try {
-      return await api.get(url, options).json<T>()
+      // 중복 요청 방지 적용 (기본적으로 GET 요청에는 적용)
+      if (deduplication?.enabled !== false) {
+        const requestKey = deduplication?.key || createRequestKey(url, 'GET')
+        return await RequestDeduplicator.deduplicate(requestKey, requestFn)
+      } else {
+        const controller = new AbortController()
+        return await requestFn(controller.signal)
+      }
     } catch (error) {
-      return handleApiError(error)
+      return await handleApiError(error, errorOptions)
     }
   },
 
   // POST 요청
-  async post<T>(url: string, data?: unknown, options?: Options): Promise<T> {
+  async post<T>(url: string, data?: unknown, options?: ExtendedOptions): Promise<T> {
+    const { deduplication, errorOptions, ...kyOptions } = options || {}
+
+    const requestFn = async (signal: AbortSignal) => {
+      return await api.post(url, { json: data, ...kyOptions, signal }).json<T>()
+    }
+
     try {
-      return await api.post(url, { json: data, ...options }).json<T>()
+      // POST 요청은 기본적으로 중복 방지 비활성화 (명시적으로 활성화된 경우만)
+      if (deduplication?.enabled === true) {
+        const requestKey = deduplication?.key || createRequestKey(url, 'POST', data)
+        return await RequestDeduplicator.deduplicate(requestKey, requestFn)
+      } else {
+        const controller = new AbortController()
+        return await requestFn(controller.signal)
+      }
     } catch (error) {
-      return handleApiError(error)
+      return await handleApiError(error, errorOptions)
     }
   },
 
   // PUT 요청
-  async put<T>(url: string, data?: unknown, options?: Options): Promise<T> {
+  async put<T>(url: string, data?: unknown, options?: ExtendedOptions): Promise<T> {
+    const { deduplication, errorOptions, ...kyOptions } = options || {}
+
+    const requestFn = async (signal: AbortSignal) => {
+      return await api.put(url, { json: data, ...kyOptions, signal }).json<T>()
+    }
+
     try {
-      return await api.put(url, { json: data, ...options }).json<T>()
+      // PUT 요청은 기본적으로 중복 방지 비활성화
+      if (deduplication?.enabled === true) {
+        const requestKey = deduplication?.key || createRequestKey(url, 'PUT', data)
+        return await RequestDeduplicator.deduplicate(requestKey, requestFn)
+      } else {
+        const controller = new AbortController()
+        return await requestFn(controller.signal)
+      }
     } catch (error) {
-      return handleApiError(error)
+      return await handleApiError(error, errorOptions)
     }
   },
 
   // PATCH 요청
-  async patch<T>(url: string, data?: unknown, options?: Options): Promise<T> {
+  async patch<T>(url: string, data?: unknown, options?: ExtendedOptions): Promise<T> {
+    const { deduplication, errorOptions, ...kyOptions } = options || {}
+
+    const requestFn = async (signal: AbortSignal) => {
+      return await api.patch(url, { json: data, ...kyOptions, signal }).json<T>()
+    }
+
     try {
-      return await api.patch(url, { json: data, ...options }).json<T>()
+      // PATCH 요청은 기본적으로 중복 방지 비활성화
+      if (deduplication?.enabled === true) {
+        const requestKey = deduplication?.key || createRequestKey(url, 'PATCH', data)
+        return await RequestDeduplicator.deduplicate(requestKey, requestFn)
+      } else {
+        const controller = new AbortController()
+        return await requestFn(controller.signal)
+      }
     } catch (error) {
-      return handleApiError(error)
+      return await handleApiError(error, errorOptions)
     }
   },
 
   // DELETE 요청
-  async delete<T>(url: string, options?: Options): Promise<T> {
+  async delete<T>(url: string, options?: ExtendedOptions): Promise<T> {
+    const { deduplication, errorOptions, ...kyOptions } = options || {}
+
+    const requestFn = async (signal: AbortSignal) => {
+      return await api.delete(url, { ...kyOptions, signal }).json<T>()
+    }
+
     try {
-      return await api.delete(url, options).json<T>()
+      // DELETE 요청은 기본적으로 중복 방지 비활성화
+      if (deduplication?.enabled === true) {
+        const requestKey = deduplication?.key || createRequestKey(url, 'DELETE')
+        return await RequestDeduplicator.deduplicate(requestKey, requestFn)
+      } else {
+        const controller = new AbortController()
+        return await requestFn(controller.signal)
+      }
     } catch (error) {
-      return handleApiError(error)
+      return await handleApiError(error, errorOptions)
     }
   },
 

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createInvalidationManager } from '@/lib/query-invalidation'
 
 interface QueryProviderProps {
   children: React.ReactNode
@@ -9,7 +10,7 @@ interface QueryProviderProps {
 
 // QueryClient 인스턴스 생성
 const createQueryClient = () => {
-  return new QueryClient({
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         // 기본 stale time (데이터가 fresh 상태로 유지되는 시간)
@@ -45,6 +46,11 @@ const createQueryClient = () => {
       },
     },
   })
+
+  // QueryClient 생성 후 무효화 관리자 초기화
+  createInvalidationManager(queryClient)
+
+  return queryClient
 }
 
 // 전역 QueryClient 인스턴스
