@@ -33,7 +33,7 @@ export function UserProfile({ className }: UserProfileProps) {
   const authApi = useAuthApi()
 
   // 현재 사용자 정보 조회
-  const { data: currentUser, isLoading } = userApi.show(user?.id || '')
+  const { data: currentUser, isLoading } = userApi.me()
 
   // 로그아웃 뮤테이션
   const logoutMutation = authApi.logout({

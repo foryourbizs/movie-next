@@ -13,13 +13,13 @@ import type { QueryError } from '@/types/query'
  * 이 파일은 자동 생성되지 않습니다. 커스텀 메서드를 여기에 추가하세요.
  */
 export class UserApi extends CrudUserApi {
-  useMe = (options?: Omit<UseQueryOptions<User, QueryError>, 'queryKey' | 'queryFn'>) => {
+  me = (options?: Omit<UseQueryOptions<User, QueryError>, 'queryKey' | 'queryFn'>) => {
     return useQuery({
-      queryKey: [...QUERY_KEYS.USER.details(), 'me'],
+      queryKey: ['users', 'me'],
       queryFn: async (): Promise<User> => {
         return apiUtils.get<User>(`${this.baseUrl}/me`)
       },
-      staleTime: 5 * 60 * 1000, // 5분
+      staleTime: 5 * 60 * 1000,
       ...options,
     })
   }

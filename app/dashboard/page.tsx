@@ -24,7 +24,7 @@ export default function DashboardPage() {
   const userApi = useUserApi()
 
   // 🚀 모든 훅을 조건부 렌더링 이전에 호출!
-  const { data: currentUser, isLoading } = userApi.show(user?.id || '')
+  const { data: currentUser, isLoading } = userApi.me()
 
   // 하이드레이션이 완료되지 않았으면 로딩 표시
   if (!hydrated) {
