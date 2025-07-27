@@ -1,63 +1,8 @@
-# ky HTTP 클라이언트 구현
+# ky HTTP 클라이언트 구현 가이드
 
-이 프로젝트는 `.cursorrules`와 `.backendrules`에 따라 구현된 ky HTTP 클라이언트입니다.
+Next.js 15 + TypeScript 프로젝트를 위한 완전한 HTTP 클라이언트 솔루션입니다.
 
-## 📁 파일 구조
-
-```
-lib/
-├── constants.ts     # API 엔드포인트 및 상수 정의
-├── api.ts          # ky HTTP 클라이언트 설정 (순수 HTTP 기능)
-└── token-manager.ts # JWT 토큰 관리 및 인증 로직
-
-types/
-└── api.ts          # API 관련 타입 정의
-
-hooks/               # 도메인별로 분리된 커스텀 훅들
-├── use-api.ts      # 통합 export (기존 호환성 유지)
-├── use-auth.ts     # 인증 관련 훅들 (로그인, 회원가입, 로그아웃)
-├── use-users.ts    # 사용자 관리 훅들 (CRUD)
-└── use-query-utils.ts # 쿼리 유틸리티 (무효화, 프리페치)
-
-store/
-└── auth-store.ts   # Zustand 인증 상태 관리
-
-providers/
-└── query-provider.tsx # React Query Provider
-```
-
-### 📚 구조 개선사항
-
-#### 1. **훅 파일 분리**
-백엔드 route가 늘어날수록 `use-api.ts` 파일이 커지지 않도록 **도메인별로 분리**했습니다:
-
-- **`use-auth.ts`**: 인증 관련 (로그인, 회원가입, 로그아웃, 토큰 갱신)
-- **`use-users.ts`**: 사용자 관리 (목록 조회, 생성, 수정, 삭제)
-- **`use-query-utils.ts`**: 공통 유틸리티 (쿼리 무효화, 프리페치)
-- **`use-api.ts`**: 통합 export (기존 import 경로 유지)
-
-#### 2. **인증 로직 분리**
-관심사 분리를 위해 HTTP 클라이언트와 인증 로직을 분리했습니다:
-
-- **`lib/api.ts`**: 순수 HTTP 클라이언트 기능만 (GET, POST, PUT, PATCH, DELETE)
-- **`lib/token-manager.ts`**: JWT 토큰 관리, 자동 갱신, 인증 상태 처리
-
-**장점**:
-- 🔍 **명확한 책임 분리**: HTTP 통신 vs 인증 관리
-- 🛠️ **유지보수성 향상**: 각 기능을 독립적으로 수정 가능
-- 🔄 **재사용성 증가**: 토큰 관리자를 다른 HTTP 클라이언트에서도 사용 가능
-- 📝 **테스트 용이성**: 각 모듈을 독립적으로 테스트 가능
-
-### 새로운 도메인 추가 시:
-
-```bash
-# 예: 게시물 관리 기능 추가 시
-hooks/
-├── use-posts.ts    # 게시물 관련 훅들
-└── use-api.ts      # 새 훅들을 추가로 export
-```
-
-## 🚀 주요 기능
+## ✨ 주요 특징
 
 ### 1. 자동 토큰 관리
 - JWT Access Token 및 Refresh Token 자동 관리
@@ -93,6 +38,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 
 ```tsx
 import { QueryProvider } from '@/providers/query-provider'
+import { TokenMonitorProvider } from '@/providers/token-monitor-provider'
 
 export default function RootLayout({
   children,
@@ -103,7 +49,9 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <QueryProvider>
-          {children}
+          <TokenMonitorProvider>
+            {children}
+          </TokenMonitorProvider>
         </QueryProvider>
       </body>
     </html>
@@ -111,319 +59,324 @@ export default function RootLayout({
 }
 ```
 
+## 🔧 구조적 개선 사항
+
+#### 1. **도메인별 훅 분리**
+API 훅들을 도메인별로 분리하여 코드 구조를 개선했습니다:
+
+- **`hooks/use-auth.ts`**: 인증 관련 클래스 (`AuthApi`)
+- **`hooks/use-users.ts`**: 사용자 관리 클래스 (`UserApi`)
+- **`hooks/use-query-utils.ts`**: 쿼리 유틸리티 훅들
+
+#### 2. **인증 로직 분리**
+관심사 분리를 위해 HTTP 클라이언트와 인증 로직을 분리했습니다:
+
+- **`lib/api.ts`**: 순수 HTTP 클라이언트 기능만 (GET, POST, PUT, PATCH, DELETE)
+- **`lib/token-manager.ts`**: JWT 토큰 관리, 자동 갱신, 인증 상태 처리
+
+#### 3. **클래스 기반 API**
+모든 API 작업을 직관적인 클래스 인터페이스로 통합했습니다:
+
+**장점**:
+- 🎯 **일관된 API**: 모든 작업이 하나의 객체에서 관리
+- 📚 **직관적인 메서드명**: CRUD 작업을 명확하게 표현 (`index`, `show`, `create`, `update`, `destroy`)
+- 🔧 **통합 유틸리티**: 캐시 관리, 프리페치 등을 포함
+- 🎯 **통일된 인터페이스**: 모든 도메인에서 일관된 API 사용
+
+### 새로운 도메인 추가 시:
+1. `hooks/use-{domain}.ts` 파일 생성
+2. `{Domain}Api` 클래스 구현
+3. 필요한 타입을 `types/api.ts`에 추가
+
 ## 💻 사용 예시
 
-### 1. 인증 관련
+### 🎯 **클래스 기반 API**
+
+#### 1. 인증 API 
 
 ```tsx
 'use client'
 
-// 방법 1: 통합 import (기존 방식 유지)
-import { useLogin, useSignUp, useLogout } from '@/hooks/use-api'
-
-// 방법 2: 직접 import (새로운 방식)
-import { useLogin, useSignUp, useLogout } from '@/hooks/use-auth'
-
+import { useAuthApi } from '@/hooks/use-auth'
 import { useAuth } from '@/store/auth-store'
 
 export function AuthExample() {
-  const { user, isAuthenticated, login, logout } = useAuth()
-  const loginMutation = useLogin({
+  const authApi = useAuthApi()
+  const { login } = useAuth()
+
+  // 로그인
+  const loginMutation = authApi.login({
     onSuccess: (data) => {
       login(data)
-      // 로그인 성공 후 처리
     }
   })
 
-  const handleLogin = () => {
-    loginMutation.mutate({
-      email: 'user@example.com',
-      password: 'password123'
-    })
-  }
-
-  return (
-    <div>
-      {isAuthenticated ? (
-        <div>
-          <p>환영합니다, {user?.name}님!</p>
-          <button onClick={() => logout()}>로그아웃</button>
-        </div>
-      ) : (
-        <button onClick={handleLogin}>로그인</button>
-      )}
-    </div>
-  )
-}
-```
-
-### 2. 사용자 관리
-
-```tsx
-'use client'
-
-// 방법 1: 통합 import
-import { useUsers, useCreateUser, useUpdateUser } from '@/hooks/use-api'
-
-// 방법 2: 직접 import  
-import { useUsers, useCreateUser, useUpdateUser } from '@/hooks/use-users'
-
-export function UserManagement() {
-  const { data: users, isLoading } = useUsers({
-    limit: 10,
-    offset: 0,
-    sort: ['-created_at']
+  // 회원가입
+  const signUpMutation = authApi.signUp({
+    onSuccess: (data) => {
+      login(data)
+    }
   })
 
-  const createUserMutation = useCreateUser()
-  const updateUserMutation = useUpdateUser()
+  // 로그아웃
+  const logoutMutation = authApi.logout()
 
-  const handleCreateUser = () => {
-    createUserMutation.mutate({
-      name: '새 사용자',
-      email: 'newuser@example.com',
-      password: 'password123'
-    })
+  // 토큰 상태 확인
+  const checkTokenStatus = async () => {
+    const utils = authApi.utils()
+    const status = await utils.getTokenStatus()
+    console.log('Token Status:', status)
   }
-
-  const handleUpdateUser = (id: string) => {
-    updateUserMutation.mutate({
-      id,
-      data: {
-        name: '수정된 이름'
-      }
-    })
-  }
-
-  if (isLoading) return <div>로딩 중...</div>
 
   return (
     <div>
-      <button onClick={handleCreateUser}>사용자 생성</button>
-      <ul>
-        {users?.data.map(user => (
-          <li key={user.id}>
-            {user.name} ({user.email})
-            <button onClick={() => handleUpdateUser(user.id)}>
-              수정
-            </button>
-          </li>
-        ))}
-      </ul>
+      <button onClick={() => loginMutation.mutate({
+        email: 'user@example.com',
+        password: 'password123'
+      })}>
+        로그인
+      </button>
+      
+      <button onClick={() => signUpMutation.mutate({
+        name: '홍길동',
+        email: 'hong@example.com', 
+        password: 'password123'
+      })}>
+        회원가입
+      </button>
+      
+      <button onClick={() => logoutMutation.mutate()}>
+        로그아웃
+      </button>
+      
+      <button onClick={checkTokenStatus}>
+        토큰 상태 확인
+      </button>
     </div>
   )
 }
 ```
 
-### 3. 쿼리 유틸리티
+#### 2. 사용자 API
 
 ```tsx
 'use client'
 
-import { useInvalidateQueries, usePrefetchQueries } from '@/hooks/use-query-utils'
+import { useUserApi } from '@/hooks/use-users'
 
-export function CacheManagement() {
-  const { invalidateUsers, invalidateAll } = useInvalidateQueries()
-  const { prefetchUsers } = usePrefetchQueries()
+export function UserExample() {
+  const userApi = useUserApi()
 
+  // 조회 작업
+  const { data: currentUser } = userApi.me() // 내 정보
+  const { data: users } = userApi.index({ limit: 10 }) // 목록
+  const { data: user } = userApi.show('user-id') // 특정 유저
+
+  // 수정 작업
+  const createMutation = userApi.create()
+  const updateMutation = userApi.update()
+  const updateMeMutation = userApi.updateMe()
+  const deleteMutation = userApi.destroy()
+
+  // 유틸리티
   const handleRefresh = () => {
-    invalidateUsers() // 사용자 목록 캐시 무효화
+    const invalidate = userApi.invalidateQueries()
+    invalidate.all() // 모든 사용자 쿼리 새로고침
   }
 
   const handlePrefetch = () => {
-    prefetchUsers({ limit: 10 }) // 사용자 데이터 미리 로드
+    const prefetch = userApi.prefetch()
+    prefetch.users({ limit: 20 }) // 미리 로드
   }
 
   return (
     <div>
-      <button onClick={handleRefresh}>새로고침</button>
-      <button onClick={handlePrefetch}>데이터 미리 로드</button>
+      {/* 현재 사용자 */}
+      <p>안녕하세요, {currentUser?.name}님!</p>
+      
+      {/* 사용자 목록 */}
+      <ul>
+        {users?.data.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+      
+      {/* 액션 버튼들 */}
+      <button onClick={() => createMutation.mutate({
+        name: '새 사용자',
+        email: 'new@example.com',
+        password: 'password123'
+      })}>
+        사용자 생성
+      </button>
+      
+      <button onClick={handleRefresh}>
+        새로고침
+      </button>
     </div>
   )
 }
 ```
 
-### 4. 직접 API 호출
+이제 모든 API 호출이 클래스 기반으로 통일되어 더 일관되고 직관적인 개발 경험을 제공합니다! 🎉
+
+## 📖 클래스 기반 API 레퍼런스
+
+### 🔐 AuthApi 메서드
 
 ```tsx
-import { apiUtils } from '@/lib/api'
-import { tokenManager } from '@/lib/token-manager'
-import type { User } from '@/types/api'
+const authApi = useAuthApi()
 
-// HTTP 클라이언트 사용 (lib/api.ts)
-const users = await apiUtils.get<User[]>('/users')
-const newUser = await apiUtils.post<User>('/users', {
-  name: '홍길동',
-  email: 'hong@example.com'
-})
+// 인증 작업
+authApi.login(options?)        // 로그인
+authApi.signUp(options?)       // 회원가입  
+authApi.logout(options?)       // 로그아웃
+authApi.refreshToken(options?) // 토큰 갱신
 
-// 토큰 관리 (lib/token-manager.ts)
-const isExpired = tokenManager.isTokenExpired()
-const isExpiringSoon = tokenManager.isTokenExpiringSoon()
-
-// 수동 토큰 갱신
-try {
-  await tokenManager.refreshAccessToken()
-} catch (error) {
-  console.error('Token refresh failed:', error)
-}
+// 유틸리티
+const utils = authApi.utils()
+utils.getTokenManager()        // 토큰 관리자 접근
+utils.getTokenStatus()         // 토큰 상태 확인
+utils.invalidateAuth()         // 인증 쿼리 무효화
+utils.clearCache()             // 캐시 전체 삭제
 ```
+
+### 👥 UserApi 메서드
+
+```tsx
+const userApi = useUserApi()
+
+// 조회 작업 (Query)
+userApi.me(options?)           // 현재 사용자 정보
+userApi.index(query?, options?) // 사용자 목록 (페이지네이션)
+userApi.show(id, options?)     // 특정 사용자 조회
+
+// 수정 작업 (Mutation)  
+userApi.create(options?)       // 사용자 생성
+userApi.update(options?)       // 사용자 수정
+userApi.updateMe(options?)     // 내 정보 수정
+userApi.destroy(options?)      // 사용자 삭제
+
+// 쿼리 유틸리티
+const invalidate = userApi.invalidateQueries()
+invalidate.all()               // 모든 사용자 쿼리 무효화
+invalidate.me()                // 내 정보만 무효화
+invalidate.byId(id)            // 특정 사용자만 무효화
+
+// 프리페치 유틸리티  
+const prefetch = userApi.prefetch()
+prefetch.users(query?)         // 사용자 목록 미리 로드
+prefetch.user(id)              // 특정 사용자 미리 로드
+prefetch.me()                  // 내 정보 미리 로드
+```
+
+### 🔄 메서드명 규칙
+
+| 작업 | 메서드명 | 설명 |
+|------|----------|------|
+| 목록 조회 | `index()` | 페이지네이션된 목록 |
+| 단일 조회 | `show(id)` | 특정 항목 조회 |
+| 생성 | `create()` | 새 항목 생성 |
+| 수정 | `update()` | 기존 항목 수정 |
+| 삭제 | `destroy()` | 항목 삭제 |
+| 내 정보 | `me()` | 현재 사용자 관련 |
 
 ## 🔍 고급 사용법
 
 ### 1. CRUD 쿼리 빌더
 
-```tsx
-import { useUsers } from '@/hooks/use-users'
-
-export function AdvancedUserList() {
-  // 이메일 필터링 (현재 백엔드에서 허용된 유일한 필터)
-  const { data: gmailUsers } = useUsers({
-    filter: {
-      email_like: '%gmail.com%'  // Gmail 사용자 검색
-    },
-    sort: ['-created_at'],  // 생성일 내림차순
-    limit: 20,
-    offset: 0
-  })
-
-  // 페이지네이션 방식 1: offset/limit
-  const { data: pagedUsers1 } = useUsers({
-    limit: 10,
-    offset: 20  // 3번째 페이지 (0-based)
-  })
-
-  // 페이지네이션 방식 2: page 객체
-  const { data: pagedUsers2 } = useUsers({
-    page: {
-      number: 3,  // 페이지 번호 (1-based)
-      size: 10    // 페이지 크기
-    }
-  })
-
-  // 정렬 옵션
-  const { data: sortedUsers } = useUsers({
-    sort: ['name', '-created_at']  // 이름 오름차순, 생성일 내림차순
-  })
-
-  return <div>{/* 사용자 목록 렌더링 */}</div>
-}
-```
-
-**⚠️ 중요**: 현재 백엔드는 `allowedFilters: ['email']`만 설정되어 있어 **이메일 필드만 필터링 가능**합니다.
-
-### 2. 캐시 및 무효화 관리
+`@foryourdev/nestjs-crud` 호환 쿼리 빌더를 사용하여 복잡한 조건의 데이터를 쉽게 조회할 수 있습니다:
 
 ```tsx
-import { useInvalidateQueries, usePrefetchQueries } from '@/hooks/use-query-utils'
+const userApi = useUserApi()
 
-export function CacheManagement() {
-  const { invalidateUsers, invalidateAll } = useInvalidateQueries()
-  const { prefetchUsers } = usePrefetchQueries()
+// 페이지네이션과 정렬
+const { data } = userApi.index({
+  limit: 20,
+  offset: 0,
+  sort: ['-created_at', 'name'] // 생성일 내림차순, 이름 오름차순
+})
 
-  const handleRefresh = () => {
-    invalidateUsers() // 사용자 목록 캐시 무효화
+// 필터링
+const { data: filteredUsers } = userApi.index({
+  limit: 10,
+  filter: {
+    'email_icontains': 'gmail',     // 이메일에 'gmail' 포함
+    'created_at_gte': '2024-01-01'  // 2024년 1월 1일 이후 가입
   }
-
-  const handlePrefetch = () => {
-    prefetchUsers({ limit: 10 }) // 사용자 데이터 미리 로드
-  }
-
-  return (
-    <div>
-      <button onClick={handleRefresh}>새로고침</button>
-      <button onClick={handlePrefetch}>데이터 미리 로드</button>
-    </div>
-  )
-}
+})
 ```
 
-## 🛡️ 보안 고려사항
+### 2. 토큰 상태 모니터링
 
-1. **토큰 저장**: Access Token은 메모리에, Refresh Token은 localStorage에 저장
-2. **자동 갱신**: 401 에러 시 자동으로 토큰 갱신 시도
-3. **토큰 만료**: 갱신 실패 시 자동 로그아웃 및 로그인 페이지 리디렉션
-4. **HTTPS**: 프로덕션 환경에서는 반드시 HTTPS 사용
-
-### 🔄 토큰 만료 방지 시스템
-
-#### 1. 예방적 토큰 갱신
-- **API 요청 전 체크**: 매 API 호출 시 토큰 만료 임박 여부 확인
-- **자동 갱신**: 만료 5분 전 자동으로 토큰 갱신
-- **백그라운드 모니터링**: 30초마다 토큰 상태 체크
-
-#### 2. 사용자 경험 개선
-- **무중단 갱신**: 사용자가 모르는 사이에 토큰 갱신
-- **로그 출력**: 개발 모드에서 토큰 갱신 상태 콘솔 출력
-- **페이지 포커스 시 갱신**: 오랫동안 탭을 떠났다가 돌아온 경우 토큰 체크
-
-#### 3. 토큰 상태 동기화
-- **Zustand Store 연동**: 토큰 갱신 시 인증 상태 자동 동기화
-- **localStorage 연동**: 브라우저 재시작 시에도 토큰 상태 유지
-- **만료 시간 추적**: 정확한 만료 예측을 위한 시간 추적
+토큰 만료를 사전에 방지하기 위한 모니터링 시스템:
 
 ```tsx
-// TokenMonitorProvider가 자동으로 처리하므로 별도 설정 불필요
-// app/layout.tsx에서 이미 적용됨
+const authApi = useAuthApi()
 
-// 수동으로 토큰 상태 확인하고 싶은 경우
-import { tokenManager } from '@/lib/api'
-
-// 토큰 만료 체크
-const isExpired = tokenManager.isTokenExpired()
-const isExpiringSoon = tokenManager.isTokenExpiringSoon()
-
-// 수동 토큰 갱신
-try {
-  await tokenManager.refreshAccessToken()
-  console.log('Token refreshed successfully')
-} catch (error) {
-  console.error('Manual token refresh failed:', error)
+// 토큰 상태 확인
+const checkToken = async () => {
+  const utils = authApi.utils()
+  const status = await utils.getTokenStatus()
+  
+  console.log('Access Token:', status.hasAccessToken)
+  console.log('Refresh Token:', status.hasRefreshToken)
+  console.log('Is Expired:', status.isExpired)
+  console.log('Is Expiring Soon:', status.isExpiringSoon)
 }
 ```
+
+### 3. 캐시 최적화
+
+쿼리 캐시를 효율적으로 관리하여 성능을 향상시킬 수 있습니다:
+
+```tsx
+const userApi = useUserApi()
+
+// 특정 사용자 데이터 프리페치
+const prefetchUser = async (userId: string) => {
+  const prefetch = userApi.prefetch()
+  await prefetch.user(userId)
+}
+
+// 사용자 목록 미리 로드
+const prefetchUsers = async () => {
+  const prefetch = userApi.prefetch()
+  await prefetch.users({ limit: 50 })
+}
+
+// 캐시 무효화
+const refreshData = () => {
+  const invalidate = userApi.invalidateQueries()
+  invalidate.all() // 모든 사용자 관련 캐시 삭제
+}
+```
+
+## 🚨 주의사항
+
+### 1. 토큰 만료 방지
+- 백그라운드에서 자동으로 토큰을 모니터링합니다
+- 만료 5분 전에 자동으로 갱신을 시도합니다
+- 페이지 포커스 시에도 토큰 상태를 확인합니다
+
+### 2. 에러 처리
+- 모든 API 에러는 `react-hot-toast`로 자동 표시됩니다
+- 401 에러 시 자동으로 토큰 갱신을 시도합니다
+- 갱신 실패 시 로그인 페이지로 리다이렉트됩니다
+
+### 3. 성능 최적화
+- TanStack Query의 캐싱 전략을 활용합니다
+- 사용자 정보는 5분간 캐시됩니다
+- 사용자 목록은 2분간 캐시됩니다
 
 ## 🔧 커스터마이징
 
-### API 기본 설정 변경
+### 새로운 도메인 API 추가
 
-`lib/constants.ts`에서 API 설정을 수정할 수 있습니다:
+예를 들어, 게시물(Post) 도메인을 추가하려면:
 
-```typescript
-export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-  VERSION: 'v1',
-  PREFIX: 'api',
-  TIMEOUT: 30000, // 30초
-} as const
-```
-
-### 에러 메시지 커스터마이징
-
-`lib/constants.ts`의 `ERROR_MESSAGES`를 수정하여 에러 메시지를 변경할 수 있습니다.
-
-### 새로운 도메인의 API 엔드포인트 추가
-
-예를 들어 게시물(Posts) 관리 기능을 추가하는 경우:
-
-1. **상수 추가** (`lib/constants.ts`):
-```typescript
-export const API_ENDPOINTS = {
-  // ... 기존 코드
-  POSTS: {
-    BASE: 'posts',
-    BY_ID: (id: string) => `posts/${id}`,
-  },
-} as const
-
-export const QUERY_KEYS = {
-  // ... 기존 코드
-  POSTS: ['posts'] as const,
-  POST_BY_ID: (id: string) => ['posts', id] as const,
-} as const
-```
-
-2. **타입 정의** (`types/api.ts`):
-```typescript
+1. **타입 정의** (`types/api.ts`):
+```tsx
 export interface Post {
   id: string
   title: string
@@ -444,60 +397,152 @@ export interface UpdatePostRequest {
 }
 ```
 
-3. **훅 파일 생성** (`hooks/use-posts.ts`):
-```typescript
+2. **API 클래스 생성** (`hooks/use-posts.ts`):
+```tsx
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiUtils } from '@/lib/api'
 import { API_ENDPOINTS, QUERY_KEYS } from '@/lib/constants'
-import type { Post, CreatePostRequest, UpdatePostRequest, PaginatedResponse, CrudQuery } from '@/types/api'
+import type { Post, CreatePostRequest, UpdatePostRequest } from '@/types/api'
 
-export const usePosts = (query?: CrudQuery) => {
-  const queryString = query ? `?${apiUtils.buildCrudQuery(query as Record<string, unknown>)}` : ''
-  
-  return useQuery({
-    queryKey: [...QUERY_KEYS.POSTS, query],
-    queryFn: (): Promise<PaginatedResponse<Post>> => {
-      return apiUtils.get<PaginatedResponse<Post>>(`${API_ENDPOINTS.POSTS.BASE}${queryString}`)
-    },
-    staleTime: 2 * 60 * 1000,
-  })
+class PostApi {
+  private queryClient = useQueryClient()
+
+  // 게시물 목록 조회
+  index(query?: CrudQuery) {
+    const queryString = query ? `?${apiUtils.buildCrudQuery(query)}` : ''
+    return useQuery({
+      queryKey: ['posts', query],
+      queryFn: async () => {
+        return apiUtils.get<PaginatedResponse<Post>>(`/posts${queryString}`)
+      },
+      staleTime: 2 * 60 * 1000,
+    })
+  }
+
+  // 특정 게시물 조회
+  show(id: string) {
+    return useQuery({
+      queryKey: ['posts', id],
+      queryFn: async () => {
+        return apiUtils.get<Post>(`/posts/${id}`)
+      },
+      staleTime: 5 * 60 * 1000,
+    })
+  }
+
+  // 게시물 생성
+  create() {
+    return useMutation({
+      mutationFn: async (data: CreatePostRequest) => {
+        return apiUtils.post<Post>('/posts', data)
+      },
+      onSuccess: () => {
+        this.queryClient.invalidateQueries({ queryKey: ['posts'] })
+      },
+    })
+  }
+
+  // 게시물 수정
+  update() {
+    return useMutation({
+      mutationFn: async ({ id, data }: { id: string; data: UpdatePostRequest }) => {
+        return apiUtils.put<Post>(`/posts/${id}`, data)
+      },
+      onSuccess: (_, { id }) => {
+        this.queryClient.invalidateQueries({ queryKey: ['posts'] })
+        this.queryClient.invalidateQueries({ queryKey: ['posts', id] })
+      },
+    })
+  }
+
+  // 게시물 삭제
+  destroy() {
+    return useMutation({
+      mutationFn: async (id: string) => {
+        return apiUtils.delete<void>(`/posts/${id}`)
+      },
+      onSuccess: (_, id) => {
+        this.queryClient.invalidateQueries({ queryKey: ['posts'] })
+        this.queryClient.removeQueries({ queryKey: ['posts', id] })
+      },
+    })
+  }
 }
 
-export const useCreatePost = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: (data: CreatePostRequest): Promise<Post> => {
-      return apiUtils.post<Post>(API_ENDPOINTS.POSTS.BASE, data)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.POSTS })
-    },
-  })
+export const usePostApi = () => {
+  return new PostApi()
 }
-
-// ... 기타 CRUD 훅들
 ```
 
-4. **통합 export** (`hooks/use-api.ts`):
-```typescript
-// ... 기존 export들
+3. **상수 추가** (`lib/constants.ts`):
+```tsx
+export const API_ENDPOINTS = {
+  // ... 기존 엔드포인트
+  POSTS: {
+    BASE: 'posts',
+    BY_ID: (id: string) => `posts/${id}`,
+  },
+} as const
 
-// 게시물 관리 관련 훅들
-export {
-  usePosts,
-  usePost,
-  useCreatePost,
-  useUpdatePost,
-  useDeletePost
-} from './use-posts'
+export const QUERY_KEYS = {
+  // ... 기존 키
+  POSTS: ['posts'],
+  POST_BY_ID: (id: string) => ['posts', id],
+} as const
 ```
 
-## 📝 참고사항
+4. **사용 예시**:
+```tsx
+const postApi = usePostApi()
 
-- 모든 API 호출은 자동으로 JWT 토큰을 포함합니다
-- 네트워크 에러 시 자동 재시도 (최대 3회)
-- React Query DevTools는 개발 환경에서만 활성화됩니다
-- TypeScript 타입 안전성을 위해 모든 API 응답에 타입을 지정하세요
-- **기존 import 경로** (`@/hooks/use-api`)는 계속 사용 가능합니다
-- **새로운 도메인별 import** (`@/hooks/use-auth`, `@/hooks/use-users` 등)도 사용 가능합니다 
+// 게시물 목록 조회
+const { data: posts } = postApi.index({ limit: 10, sort: ['-created_at'] })
+
+// 게시물 생성
+const createMutation = postApi.create()
+createMutation.mutate({
+  title: '새 게시물',
+  content: '게시물 내용...'
+})
+
+// 게시물 수정
+const updateMutation = postApi.update()
+updateMutation.mutate({
+  id: 'post-id',
+  data: { title: '수정된 제목' }
+})
+```
+
+이런 방식으로 쉽게 새로운 도메인을 추가할 수 있습니다!
+
+## 📝 체크리스트
+
+구현을 완료한 후 다음 항목들을 확인해보세요:
+
+### ✅ 기본 설정
+- [ ] 환경 변수 설정 (`.env.local`)
+- [ ] Provider 설정 (`app/layout.tsx`)
+- [ ] 의존성 설치 완료
+
+### ✅ 인증 시스템
+- [ ] 로그인/회원가입 폼 작동
+- [ ] 토큰 자동 갱신 확인
+- [ ] 로그아웃 기능 확인
+- [ ] 401 에러 시 자동 처리 확인
+
+### ✅ 사용자 관리
+- [ ] 사용자 목록 조회/필터링
+- [ ] 프로필 수정 기능
+- [ ] 권한 기반 접근 제어
+
+### ✅ 에러 처리
+- [ ] API 에러 시 토스트 메시지 표시
+- [ ] 네트워크 에러 처리
+- [ ] 로딩 상태 표시
+
+### ✅ 성능 최적화
+- [ ] 쿼리 캐싱 작동 확인
+- [ ] 불필요한 리렌더링 방지
+- [ ] 토큰 모니터링 작동 확인
+
+모든 항목이 체크되면 구현이 완료된 것입니다! 🎉 

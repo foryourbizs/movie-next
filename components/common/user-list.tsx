@@ -1,226 +1,186 @@
 'use client'
 
-import React from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import React, { useState, useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+// Select component 대신 간단한 버튼으로 대체
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useUsers } from '@/hooks/use-api'
+import { useUserApi } from '@/hooks/use-users'
 import { useAuth, usePermissions } from '@/store/auth-store'
 import { cn } from '@/lib/utils'
 import type { CrudQuery } from '@/types/api'
-
-// 필터 스키마 정의
-const filterSchema = z.object({
-  email: z.string().optional()
-})
-
-type FilterFormData = z.infer<typeof filterSchema>
 
 interface UserListProps {
   className?: string
 }
 
+const ITEMS_PER_PAGE = 10
+
 export function UserList({ className }: UserListProps) {
-  const { canManageUsers } = usePermissions()
-  const { hydrated } = useAuth()
-  const [currentPage, setCurrentPage] = React.useState(1)
-  const [query, setQuery] = React.useState<CrudQuery>({
-    limit: 10,
-    offset: 0,
-    sort: ['-created_at']
-  })
-
-  const { data: usersData, isLoading, error } = useUsers(query, {
-    enabled: hydrated
-  })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [emailFilter, setEmailFilter] = useState('')
+  const [sortBy, setSortBy] = useState<string>('-created_at')
   
-  const form = useForm<FilterFormData>({
-    resolver: zodResolver(filterSchema),
-    defaultValues: {
-      email: ''
-    }
-  })
+  const { user: currentUser } = useAuth()
+  const { canManageUsers } = usePermissions()
+  const userApi = useUserApi()
 
-  const handleFilter = (data: FilterFormData) => {
-    const newQuery: CrudQuery = {
-      limit: 10,
-      offset: 0,  // 첫 페이지이므로 offset 0
-      sort: ['-created_at']  // 내림차순은 - 접두사 사용
+  // 쿼리 파라미터 구성
+  const query = useMemo((): CrudQuery => {
+    const baseQuery: CrudQuery = {
+      limit: ITEMS_PER_PAGE,
+      offset: (currentPage - 1) * ITEMS_PER_PAGE,
+      sort: [sortBy],
     }
 
-    // @foryourdev/nestjs-crud 형식: filter[field_operator]=value
-    if (data.email && data.email.trim()) {
-      newQuery.filter = {
-        email_like: `%${data.email.trim()}%`  // LIKE 패턴
+    if (emailFilter.trim()) {
+      baseQuery.filter = {
+        'email_icontains': emailFilter.trim()
       }
     }
 
-    setQuery(newQuery)
-    setCurrentPage(1)
-  }
+    return baseQuery
+  }, [currentPage, emailFilter, sortBy])
 
-  const handleClearFilter = () => {
-    form.reset({ email: '' })
-    setQuery({
-      limit: 10,
-      offset: 0,
-      sort: ['-created_at']
-    })
-    setCurrentPage(1)
+  // 사용자 목록 조회
+  const { data: usersData, isLoading, error } = userApi.index(query)
+
+  // 사용자 삭제 뮤테이션
+  const deleteUserMutation = userApi.destroy()
+
+  const handleDeleteUser = (userId: string, userName: string) => {
+    if (confirm(`정말로 "${userName}" 사용자를 삭제하시겠습니까?`)) {
+      deleteUserMutation.mutate(userId)
+    }
   }
 
   const handlePageChange = (page: number) => {
-    const offset = (page - 1) * 10  // 페이지당 10개씩
-    setQuery(prev => ({ ...prev, offset }))
     setCurrentPage(page)
   }
 
-  const getRoleBadgeVariant = (role: string) => {
-    return role === 'admin' ? 'default' : 'secondary'
+  const handleEmailFilterChange = (value: string) => {
+    setEmailFilter(value)
+    setCurrentPage(1) // 필터 변경 시 첫 페이지로 이동
   }
 
-  const getStatusBadgeVariant = (isActive: boolean) => {
-    return isActive ? 'default' : 'destructive'
+  const handleSortChange = (value: string) => {
+    setSortBy(value)
+    setCurrentPage(1) // 정렬 변경 시 첫 페이지로 이동
   }
 
-  if (isLoading) {
-    return (
-      <Card className={cn('w-full', className)}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-2">사용자 목록을 불러오는 중...</span>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  // 총 페이지 수 계산
+  const totalPages = usersData ? Math.ceil(usersData.total / ITEMS_PER_PAGE) : 0
 
   if (error) {
     return (
       <Card className={cn('w-full', className)}>
         <CardContent className="p-6">
           <div className="text-center text-red-500">
-            사용자 목록을 불러오는데 실패했습니다.
+            사용자 목록을 불러오는 중 오류가 발생했습니다.
           </div>
         </CardContent>
       </Card>
     )
   }
 
-  const users = usersData?.data || []
-  const totalPages = usersData?.pageCount || 1
-
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle className="text-2xl font-bold">사용자 목록</CardTitle>
-            <CardDescription>
-              등록된 모든 사용자를 확인할 수 있습니다
-              {usersData && (
-                <span className="ml-2">
-                  (총 {usersData.total}명)
-                </span>
-              )}
-            </CardDescription>
-          </div>
-        </div>
-
-        {/* 필터 폼 */}
-        <div className="mt-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleFilter)} className="flex flex-col sm:flex-row gap-2">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="sr-only">이메일 검색</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="이메일로 검색..."
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <div className="flex gap-2">
-                <Button type="submit" size="sm">
-                  검색
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearFilter}
-                >
-                  초기화
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+        <CardTitle>사용자 목록</CardTitle>
+        <CardDescription>
+          등록된 모든 사용자를 확인할 수 있습니다. ({usersData?.total || 0}명)
+        </CardDescription>
       </CardHeader>
-
       <CardContent>
-        {users.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            검색 결과가 없습니다.
+        {/* 필터 및 정렬 컨트롤 */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <Input
+              placeholder="이메일로 검색..."
+              value={emailFilter}
+              onChange={(e) => handleEmailFilterChange(e.target.value)}
+              className="w-full"
+            />
+          </div>
+                     <div className="w-full sm:w-48">
+             <select 
+               value={sortBy} 
+               onChange={(e) => handleSortChange(e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             >
+               <option value="-created_at">최신 가입순</option>
+               <option value="created_at">오래된 가입순</option>
+               <option value="name">이름순 (A-Z)</option>
+               <option value="-name">이름순 (Z-A)</option>
+               <option value="email">이메일순 (A-Z)</option>
+               <option value="-email">이메일순 (Z-A)</option>
+             </select>
+           </div>
+        </div>
+
+        {/* 사용자 테이블 */}
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-12 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : usersData?.data.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            {emailFilter ? '검색 결과가 없습니다.' : '등록된 사용자가 없습니다.'}
           </div>
         ) : (
           <>
-            {/* 사용자 테이블 */}
-            <div className="overflow-x-auto">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>이름</TableHead>
                     <TableHead>이메일</TableHead>
-                    <TableHead>전화번호</TableHead>
-                    <TableHead>권한</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead>가입방법</TableHead>
                     <TableHead>가입일</TableHead>
+                    <TableHead>상태</TableHead>
+                    {canManageUsers && <TableHead className="text-right">작업</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {usersData?.data.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
                         {user.name}
+                        {currentUser?.id === user.id && (
+                          <Badge variant="secondary" className="ml-2 text-xs">
+                            본인
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {user.createdAt
+                          ? new Date(user.createdAt).toLocaleDateString('ko-KR')
+                          : '-'}
                       </TableCell>
                       <TableCell>
-                        {user.email}
+                        <Badge variant="default">활성</Badge>
                       </TableCell>
-                      <TableCell>
-                        {user.phone || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role === 'admin' ? '관리자' : '사용자'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(user.isActive)}>
-                          {user.isActive ? '활성' : '비활성'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.provider === 'local' ? '이메일' : user.provider}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString('ko-KR')}
-                      </TableCell>
+                      {canManageUsers && (
+                        <TableCell className="text-right">
+                          {currentUser?.id !== user.id && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteUser(user.id, user.name)}
+                              disabled={deleteUserMutation.isPending}
+                            >
+                              삭제
+                            </Button>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -230,10 +190,11 @@ export function UserList({ className }: UserListProps) {
             {/* 페이지네이션 */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-muted-foreground">
-                  페이지 {currentPage} / {totalPages}
-                </div>
-                <div className="flex gap-2">
+                <p className="text-sm text-gray-500">
+                  총 {usersData?.total}명 중 {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, usersData?.total || 0)}-
+                  {Math.min(currentPage * ITEMS_PER_PAGE, usersData?.total || 0)}명 표시
+                </p>
+                <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -242,35 +203,9 @@ export function UserList({ className }: UserListProps) {
                   >
                     이전
                   </Button>
-                  
-                  {/* 페이지 번호 버튼들 */}
-                  <div className="flex gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum: number
-                      if (totalPages <= 5) {
-                        pageNum = i + 1
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i
-                      } else {
-                        pageNum = currentPage - 2 + i
-                      }
-                      
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={pageNum === currentPage ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handlePageChange(pageNum)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {pageNum}
-                        </Button>
-                      )
-                    })}
-                  </div>
-
+                  <span className="text-sm">
+                    {currentPage} / {totalPages}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"

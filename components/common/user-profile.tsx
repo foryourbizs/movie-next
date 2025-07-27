@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,19 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { useMe, useUpdateMe, useLogout } from '@/hooks/use-api'
+import { useUserApi } from '@/hooks/use-users'
+import { useAuthApi } from '@/hooks/use-auth'
 import { useAuth } from '@/store/auth-store'
 import { cn } from '@/lib/utils'
 
-// 프로필 업데이트 스키마 정의
 const updateProfileSchema = z.object({
-  name: z.string()
-    .min(2, '이름은 최소 2글자 이상이어야 합니다.')
-    .max(50, '이름은 최대 50글자까지 입력 가능합니다.'),
-  phone: z.string()
-    .regex(/^010-\d{4}-\d{4}$/, '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)')
-    .optional()
-    .or(z.literal(''))
+  name: z.string().min(1, '이름을 입력해주세요.'),
+  email: z.string().email('올바른 이메일 형식을 입력해주세요.'),
 })
 
 type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
@@ -32,90 +27,64 @@ interface UserProfileProps {
 }
 
 export function UserProfile({ className }: UserProfileProps) {
-  const { user, updateUser, hydrated } = useAuth()
-  const { data: userData, isLoading, error } = useMe({
-    enabled: hydrated
-  })
-  const updateMeMutation = useUpdateMe({
-    onSuccess: (data) => {
-      updateUser(data)
-    }
-  })
-  const logoutMutation = useLogout()
+  const [isEditing, setIsEditing] = useState(false)
+  const { user, logout: authLogout } = useAuth()
+  const userApi = useUserApi()
+  const authApi = useAuthApi()
 
-  const [isEditing, setIsEditing] = React.useState(false)
+  // 현재 사용자 정보 조회
+  const { data: currentUser, isLoading } = userApi.me()
+
+  // 프로필 업데이트 뮤테이션
+  const updateMeMutation = userApi.updateMe({
+    onSuccess: () => {
+      setIsEditing(false)
+    },
+  })
+
+  // 로그아웃 뮤테이션
+  const logoutMutation = authApi.logout({
+    onSuccess: () => {
+      authLogout()
+    },
+  })
 
   const form = useForm<UpdateProfileFormData>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      name: userData?.name || '',
-      phone: userData?.phone || ''
-    }
+      name: currentUser?.name || '',
+      email: currentUser?.email || '',
+    },
   })
 
-  // 사용자 데이터가 로드되면 폼 값 업데이트
+  // 사용자 정보가 로드되면 폼 기본값 업데이트
   React.useEffect(() => {
-    if (userData) {
+    if (currentUser) {
       form.reset({
-        name: userData.name,
-        phone: userData.phone || ''
+        name: currentUser.name,
+        email: currentUser.email,
       })
     }
-  }, [userData, form])
+  }, [currentUser, form])
 
-  const handleSubmit = (data: UpdateProfileFormData) => {
-    updateMeMutation.mutate({
-      name: data.name,
-      phone: data.phone || undefined
-    })
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    form.reset({
-      name: userData?.name || '',
-      phone: userData?.phone || ''
-    })
-    setIsEditing(false)
+  const onSubmit = (data: UpdateProfileFormData) => {
+    updateMeMutation.mutate(data)
   }
 
   const handleLogout = () => {
-    logoutMutation.mutate()
+    if (confirm('로그아웃하시겠습니까?')) {
+      logoutMutation.mutate()
+    }
   }
 
   if (isLoading) {
     return (
-      <Card className={cn('w-full max-w-2xl mx-auto', className)}>
+      <Card className={cn('w-full max-w-2xl', className)}>
         <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-2">사용자 정보를 불러오는 중...</span>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card className={cn('w-full max-w-2xl mx-auto', className)}>
-        <CardContent className="p-6">
-          <div className="text-center text-red-500">
-            사용자 정보를 불러오는데 실패했습니다.
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const currentUser = userData || user
-
-  if (!currentUser) {
-    return (
-      <Card className={cn('w-full max-w-2xl mx-auto', className)}>
-        <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">
-            사용자 정보를 찾을 수 없습니다.
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
           </div>
         </CardContent>
       </Card>
@@ -123,158 +92,89 @@ export function UserProfile({ className }: UserProfileProps) {
   }
 
   return (
-    <Card className={cn('w-full max-w-2xl mx-auto', className)}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-2xl font-bold">내 정보</CardTitle>
-          <CardDescription>
-            계정 정보를 확인하고 수정할 수 있습니다
-          </CardDescription>
-        </div>
-        <div className="flex gap-2">
-          {!isEditing && (
-            <Button
-              variant="outline"
-              onClick={() => setIsEditing(true)}
-            >
-              수정
+    <Card className={cn('w-full max-w-2xl', className)}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>프로필</CardTitle>
+            <CardDescription>개인 정보를 확인하고 수정할 수 있습니다.</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            {!isEditing ? (
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                수정
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setIsEditing(false)}>
+                취소
+              </Button>
+            )}
+            <Button variant="destructive" onClick={handleLogout} disabled={logoutMutation.isPending}>
+              {logoutMutation.isPending ? '로그아웃 중...' : '로그아웃'}
             </Button>
-          )}
-          <Button
-            variant="destructive"
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-          >
-            {logoutMutation.isPending ? '로그아웃 중...' : '로그아웃'}
-          </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent>
         {!isEditing ? (
-          // 읽기 모드
+          // 프로필 보기 모드
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">이름</label>
-                <p className="text-lg">{currentUser.name}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">이메일</label>
-                <p className="text-lg">{currentUser.email}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">전화번호</label>
-                <p className="text-lg">{currentUser.phone || '등록되지 않음'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">권한</label>
-                <div className="mt-1">
-                  <Badge variant={currentUser.role === 'admin' ? 'default' : 'secondary'}>
-                    {currentUser.role === 'admin' ? '관리자' : '사용자'}
-                  </Badge>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">가입 방법</label>
-                <p className="text-lg">
-                  {currentUser.provider === 'local' ? '이메일' : currentUser.provider}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">계정 상태</label>
-                <div className="mt-1">
-                  <Badge variant={currentUser.isActive ? 'default' : 'destructive'}>
-                    {currentUser.isActive ? '활성' : '비활성'}
-                  </Badge>
-                </div>
-              </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">이름</label>
+              <p className="mt-1 text-sm text-gray-900">{currentUser?.name}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">가입일</label>
-                <p className="text-lg">
-                  {new Date(currentUser.createdAt).toLocaleDateString('ko-KR')}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">최종 수정일</label>
-                <p className="text-lg">
-                  {new Date(currentUser.updatedAt).toLocaleDateString('ko-KR')}
-                </p>
+            <div>
+              <label className="text-sm font-medium text-gray-500">이메일</label>
+              <p className="mt-1 text-sm text-gray-900">{currentUser?.email}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">가입일</label>
+              <p className="mt-1 text-sm text-gray-900">
+                {currentUser?.createdAt
+                  ? new Date(currentUser.createdAt).toLocaleDateString('ko-KR')
+                  : '-'}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">상태</label>
+              <div className="mt-1">
+                <Badge variant="default">활성</Badge>
               </div>
             </div>
           </div>
         ) : (
-          // 수정 모드
+          // 프로필 수정 모드
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>이름</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="홍길동"
-                          {...field}
-                          disabled={updateMeMutation.isPending}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div>
-                  <label className="text-sm font-medium">이메일</label>
-                  <Input
-                    value={currentUser.email}
-                    disabled
-                    className="mt-1.5 bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    이메일은 변경할 수 없습니다
-                  </p>
-                </div>
-              </div>
-
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="phone"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>전화번호 (선택)</FormLabel>
+                    <FormLabel>이름</FormLabel>
                     <FormControl>
-                      <Input
-                        type="tel"
-                        placeholder="010-1234-5678"
-                        {...field}
-                        disabled={updateMeMutation.isPending}
-                      />
+                      <Input placeholder="이름을 입력해주세요" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  type="submit"
-                  disabled={updateMeMutation.isPending}
-                >
-                  {updateMeMutation.isPending ? '저장 중...' : '저장'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={updateMeMutation.isPending}
-                >
-                  취소
-                </Button>
-              </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>이메일</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="이메일을 입력해주세요" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={updateMeMutation.isPending} className="w-full">
+                {updateMeMutation.isPending ? '저장 중...' : '저장'}
+              </Button>
             </form>
           </Form>
         )}

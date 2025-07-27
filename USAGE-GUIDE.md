@@ -285,15 +285,23 @@ hooks/
 
 **자세한 예시는 `README-API.md`의 커스터마이징 섹션을 참고하세요.**
 
-### Import 방법 선택
+### 🎯 클래스 기반 API 사용법
 
 ```tsx
-// 방법 1: 통합 import (기존 호환성)
-import { useLogin, useUsers } from '@/hooks/use-api'
+// 클래스 기반 API
+import { useAuthApi } from '@/hooks/use-auth'
+import { useUserApi } from '@/hooks/use-users'
 
-// 방법 2: 도메인별 직접 import (새로운 방식)
-import { useLogin } from '@/hooks/use-auth'
-import { useUsers } from '@/hooks/use-users'
+const authApi = useAuthApi()
+const userApi = useUserApi()
+
+// 일관된 CRUD 인터페이스
+authApi.login()
+userApi.index()      // 목록 조회
+userApi.show(id)     // 단일 조회  
+userApi.create()     // 생성
+userApi.update()     // 수정
+userApi.destroy()    // 삭제
 ```
 
 ### 새로운 필터 추가 (백엔드 설정 필요)
