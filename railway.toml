@@ -62,6 +62,10 @@ diskBytes = 10737418240
 overlapSeconds = 10
 drainingSeconds = 30
 
+# 자동 롤백 설정
+rollbackOnHealthcheckFailure = true
+maxHealthcheckFailures = 2
+
 # 환경별 설정
 [environments.production]
 [environments.production.build]
