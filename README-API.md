@@ -301,7 +301,7 @@ const { data } = userApi.index({
 const { data: filteredUsers } = userApi.index({
   limit: 10,
   filter: {
-    'email_icontains': 'gmail',     // 이메일에 'gmail' 포함
+    'email_like': '%gmail%',        // 이메일에 'gmail' 포함
     'created_at_gte': '2024-01-01'  // 2024년 1월 1일 이후 가입
   }
 })

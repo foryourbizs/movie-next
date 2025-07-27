@@ -38,7 +38,7 @@ export function UserList({ className }: UserListProps) {
 
     if (emailFilter.trim()) {
       baseQuery.filter = {
-        'email_icontains': emailFilter.trim()
+        'email_like': `%${emailFilter.trim()}%`
       }
     }
 
