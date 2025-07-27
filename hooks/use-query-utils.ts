@@ -15,10 +15,10 @@ export const useInvalidateQueries = () => {
   const queryClient = useQueryClient()
 
   return {
-    invalidateUsers: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS }),
-    invalidateUser: (id: string) => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_BY_ID(id) }),
-    invalidateMe: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME }),
-    invalidateAuth: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH }),
+    invalidateUsers: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+    invalidateUser: (id: string) => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.detail(id) }),
+    invalidateMe: () => queryClient.invalidateQueries({ queryKey: ['users', 'me'] }),
+    invalidateAuth: () => queryClient.invalidateQueries({ queryKey: ['auth'] }),
     invalidateAll: () => queryClient.invalidateQueries(),
     clearAll: () => queryClient.clear(),
   }
@@ -32,7 +32,7 @@ export const usePrefetchQueries = () => {
     prefetchUsers: (query?: CrudQuery) => {
       const queryString = query ? `?${apiUtils.buildCrudQuery(query as Record<string, unknown>)}` : ''
       return queryClient.prefetchQuery({
-        queryKey: [...QUERY_KEYS.USERS, query],
+        queryKey: [...QUERY_KEYS.USER.lists(), query],
         queryFn: async (): Promise<PaginatedResponse<User>> => {
           return apiUtils.get<PaginatedResponse<User>>(`${API_ENDPOINTS.USERS.BASE}${queryString}`)
         },
@@ -41,7 +41,7 @@ export const usePrefetchQueries = () => {
     },
     prefetchUser: (id: string) => {
       return queryClient.prefetchQuery({
-        queryKey: QUERY_KEYS.USER_BY_ID(id),
+        queryKey: QUERY_KEYS.USER.detail(id),
         queryFn: async (): Promise<User> => {
           return apiUtils.get<User>(API_ENDPOINTS.USERS.BY_ID(id))
         },
@@ -50,7 +50,7 @@ export const usePrefetchQueries = () => {
     },
     prefetchMe: () => {
       return queryClient.prefetchQuery({
-        queryKey: QUERY_KEYS.USER_ME,
+        queryKey: ['users', 'me'],
         queryFn: async (): Promise<User> => {
           return apiUtils.get<User>(API_ENDPOINTS.USERS.ME)
         },

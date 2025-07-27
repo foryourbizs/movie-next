@@ -2,6 +2,9 @@
  * User 관련 타입 정의
  */
 
+// 관계 타입 import
+import type { Post } from '@/types/post/post'
+
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user'
@@ -26,6 +29,7 @@ export interface User {
   provider: UserProvider
   providerId?: string | null
   refreshToken?: string | null
+  posts?: Post[] | null
   createdAt: string
   updatedAt: string
 }

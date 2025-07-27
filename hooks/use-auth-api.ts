@@ -42,7 +42,7 @@ class AuthApi {
       },
       onSuccess: (data, variables) => {
         // 사용자 관련 쿼리 무효화
-        this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME })
+        this.queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
         toast.success('로그인에 성공했습니다.')
         options?.onSuccess?.(data, variables)
       },
@@ -81,7 +81,7 @@ class AuthApi {
       },
       onSuccess: (data, variables) => {
         // 사용자 관련 쿼리 무효화
-        this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME })
+        this.queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
         toast.success('회원가입에 성공했습니다.')
         options?.onSuccess?.(data, variables)
       },
@@ -162,7 +162,7 @@ class AuthApi {
        * 인증 관련 쿼리 무효화
        */
       invalidateAuth: () => {
-        this.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME })
+        this.queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
       },
 
       /**

@@ -28,7 +28,7 @@ export class CrudUserApi {
    */
   index = (query?: CrudQuery, options?: UseQueryOptions<PaginatedResponse<User>>) => {
     return useQuery({
-      queryKey: [...QUERY_KEYS.USER.lists(), query],
+      queryKey: QUERY_KEYS.USER.list(query as Record<string, unknown>),
       queryFn: () => {
         const queryString = query ? `?${apiUtils.buildCrudQuery(query as Record<string, unknown>)}` : ''
         return apiUtils.get<PaginatedResponse<User>>(`${this.baseUrl}${queryString}`)
@@ -42,7 +42,7 @@ export class CrudUserApi {
    */
   show = (id: string, options?: UseQueryOptions<User>) => {
     return useQuery({
-      queryKey: [...QUERY_KEYS.USER.detail(id)],
+      queryKey: QUERY_KEYS.USER.detail(id),
       queryFn: () => apiUtils.get<User>(`${this.baseUrl}/${id}`),
       enabled: !!id,
       ...options,

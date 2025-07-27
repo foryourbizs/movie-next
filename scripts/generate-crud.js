@@ -155,6 +155,7 @@ async function generateCRUD() {
     // 1. 스키마 API에서 정보 가져오기 시도
     let schemaData = await fetchSchemaFromAPI(entityName)
     let fields = []
+    let relations = []
     let crudInfo = null
 
     if (schemaData) {
@@ -175,12 +176,23 @@ async function generateCRUD() {
           length: col.length
         }))
 
+      // 관계 정보 추출
+      relations = schemaData.relations || []
+
       crudInfo = schemaData.crudInfo
 
       console.log(`📝 추출된 필드들:`)
       fields.forEach(field => {
         console.log(`   - ${field.name}: ${field.type}${field.isEnum ? ` (enum: ${field.enumValues?.join(', ')})` : ''}`)
       })
+
+      if (relations.length > 0) {
+        console.log(`🔗 관계 필드들:`)
+        relations.forEach(relation => {
+          const relationType = relation.type === 'one-to-many' || relation.type === 'many-to-many' ? `${relation.target}[]` : relation.target
+          console.log(`   - ${relation.name}: ${relationType} (${relation.type})`)
+        })
+      }
 
     } else {
       // 2. 수동 입력 모드
@@ -198,6 +210,8 @@ async function generateCRUD() {
           enumValues: null
         }
       })
+
+      relations = [] // 수동 모드에서는 관계 없음
     }
 
     rl.close()
@@ -214,7 +228,7 @@ async function generateCRUD() {
     await createDirectories(entityLower)
 
     // 2. CRUD 타입 정의 생성
-    await generateCrudTypes(entity, entityLower, fields)
+    await generateCrudTypes(entity, entityLower, fields, relations)
 
     // 3. 확장 가능한 타입 정의 생성 (존재하지 않을 때만)
     await generateExtendableTypes(entity, entityLower, entityKebab)
@@ -270,7 +284,25 @@ async function createDirectories(entityLower) {
   }
 }
 
-async function generateCrudTypes(entity, entityLower, fields) {
+async function generateCrudTypes(entity, entityLower, fields, relations = []) {
+  // 관계 타입 처리 함수
+  function getRelationType(relation) {
+    const targetEntity = relation.target
+    const isArray = relation.type === 'one-to-many' || relation.type === 'many-to-many'
+    const baseType = isArray ? `${targetEntity}[]` : targetEntity
+    return relation.nullable ? `${baseType} | null` : baseType
+  }
+
+  // 관계에서 필요한 import 타입들 추출
+  const relationImports = relations
+    .map(rel => rel.target)
+    .filter((target, index, arr) => arr.indexOf(target) === index) // 중복 제거
+
+  // Import 문 생성
+  const importStatements = relationImports.length > 0
+    ? `// 관계 타입 import\n${relationImports.map(target => `import type { ${target} } from '@/types/${target.toLowerCase()}/${target.toLowerCase()}'`).join('\n')}\n\n`
+    : ''
+
   // Enum 타입들 먼저 정의
   const enumTypes = fields
     .filter(field => field.isEnum && field.enumValues)
@@ -285,7 +317,7 @@ async function generateCrudTypes(entity, entityLower, fields) {
  * ${entity} 관련 타입 정의
  */
 
-${enumTypes ? enumTypes + '\n\n' : ''}// ${entity} 기본 인터페이스
+${importStatements}${enumTypes ? enumTypes + '\n\n' : ''}// ${entity} 기본 인터페이스
 export interface ${entity} {
   id: string
 ${fields.map(field => {
@@ -297,7 +329,10 @@ ${fields.map(field => {
     }
     const optional = field.isNullable ? '?' : ''
     return `  ${field.name}${optional}: ${fieldType}`
-  }).join('\n')}
+  }).join('\n')}${relations.length > 0 ? '\n' + relations.map(relation => {
+    const relationType = getRelationType(relation)
+    return `  ${relation.name}?: ${relationType}`
+  }).join('\n') : ''}
   createdAt: string
   updatedAt: string
 }
@@ -434,7 +469,7 @@ async function generateCrudApiHook(entity, entityLower, entityKebab, entityPlura
    */
   index = (query?: CrudQuery, options?: UseQueryOptions<PaginatedResponse<${entity}>>) => {
     return useQuery({
-      queryKey: [...QUERY_KEYS.${entityLower.toUpperCase()}.lists(), query],
+      queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.list(query as Record<string, unknown>),
       queryFn: () => {
         const queryString = query ? \`?\${apiUtils.buildCrudQuery(query as Record<string, unknown>)}\` : ''
         return apiUtils.get<PaginatedResponse<${entity}>>(\`\${this.baseUrl}\${queryString}\`)
@@ -450,7 +485,7 @@ async function generateCrudApiHook(entity, entityLower, entityKebab, entityPlura
    */
   show = (id: string, options?: UseQueryOptions<${entity}>) => {
     return useQuery({
-      queryKey: [...QUERY_KEYS.${entityLower.toUpperCase()}.detail(id)],
+      queryKey: QUERY_KEYS.${entityLower.toUpperCase()}.detail(id),
       queryFn: () => apiUtils.get<${entity}>(\`\${this.baseUrl}/\${id}\`),
       enabled: !!id,
       ...options,
@@ -617,22 +652,40 @@ async function updateConstants(entity, entityLower, entityPlural, entityPluralKe
 
     // API_ENDPOINTS는 더 이상 사용하지 않으므로 업데이트하지 않습니다.
 
-    // QUERY_KEYS 업데이트
-    const queryKeysRegex = /export const QUERY_KEYS = \{([^}]+)\}/s
-    const queryKeysMatch = content.match(queryKeysRegex)
+    // QUERY_KEYS 업데이트 - 중첩 객체를 올바르게 처리
+    const queryKeysStart = content.indexOf('export const QUERY_KEYS = {')
+    if (queryKeysStart !== -1) {
+      // 중괄호 매칭으로 전체 QUERY_KEYS 객체 찾기
+      let braceCount = 0
+      let start = content.indexOf('{', queryKeysStart)
+      let end = start
 
-    if (queryKeysMatch) {
-      const queryKeysContent = queryKeysMatch[1]
+      for (let i = start; i < content.length; i++) {
+        if (content[i] === '{') braceCount++
+        if (content[i] === '}') braceCount--
+        if (braceCount === 0) {
+          end = i
+          break
+        }
+      }
+
+      const queryKeysContent = content.substring(start + 1, end)
+
       if (!queryKeysContent.includes(`${entityLower.toUpperCase()}:`)) {
         const newQueryKey = `  ${entityLower.toUpperCase()}: {
     all: ['${entityLower}'] as const,
-    lists: () => [...QUERY_KEYS.${entityLower.toUpperCase()}.all, 'list'] as const,
-    list: (filters?: Record<string, unknown>) => [...QUERY_KEYS.${entityLower.toUpperCase()}.lists(), filters] as const,
-    details: () => [...QUERY_KEYS.${entityLower.toUpperCase()}.all, 'detail'] as const,
-    detail: (id: string) => [...QUERY_KEYS.${entityLower.toUpperCase()}.details(), id] as const,
+    lists: () => ['${entityLower}', 'list'] as const,
+    list: (filters?: Record<string, unknown>) => ['${entityLower}', 'list', filters] as const,
+    details: () => ['${entityLower}', 'detail'] as const,
+    detail: (id: string) => ['${entityLower}', 'detail', id] as const,
   },`
-        const updatedQueryKeys = queryKeysContent.trim() + '\n' + newQueryKey
-        content = content.replace(queryKeysRegex, `export const QUERY_KEYS = {\n${updatedQueryKeys}\n}`)
+
+        // 마지막 항목 뒤에 콤마가 있는지 확인하고 추가
+        const trimmedContent = queryKeysContent.trim()
+        const needsComma = !trimmedContent.endsWith(',') && trimmedContent.length > 0
+        const updatedQueryKeys = trimmedContent + (needsComma ? ',' : '') + '\n' + newQueryKey
+
+        content = content.substring(0, start + 1) + '\n' + updatedQueryKeys + '\n' + content.substring(end)
       }
     }
 
