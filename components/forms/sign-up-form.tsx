@@ -1,68 +1,85 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useRouter } from 'next/navigation'
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useAuthApi } from '@/hooks/use-auth-api'
-import { useAuth } from '@/store/auth-store'
-import { cn } from '@/lib/utils'
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useAuthApi } from "@/hooks/use-auth-api";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/store/auth-store";
 
-const signUpSchema = z.object({
-  name: z.string().min(1, '이름을 입력해주세요.'),
-  email: z.string().email('올바른 이메일 형식을 입력해주세요.'),
-  password: z.string().min(6, '비밀번호는 최소 6자 이상이어야 합니다.'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: '비밀번호가 일치하지 않습니다.',
-  path: ['confirmPassword'],
-})
+const signUpSchema = z
+  .object({
+    name: z.string().min(1, "이름을 입력해주세요."),
+    email: z.string().email("올바른 이메일 형식을 입력해주세요."),
+    password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다."),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "비밀번호가 일치하지 않습니다.",
+    path: ["confirmPassword"],
+  });
 
-type SignUpFormData = z.infer<typeof signUpSchema>
+type SignUpFormData = z.infer<typeof signUpSchema>;
 
 interface SignUpFormProps {
-  className?: string
-  onSuccess?: () => void
+  className?: string;
+  onSuccess?: () => void;
 }
 
 export function SignUpForm({ className, onSuccess }: SignUpFormProps) {
-  const router = useRouter()
-  const { login } = useAuth()
-  const authApi = useAuthApi()
+  const router = useRouter();
+  const { login } = useAuth();
+  const authApi = useAuthApi();
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
     },
-  })
+  });
 
   const signUpMutation = authApi.signUp({
     onSuccess: (data) => {
-      login(data)
-      onSuccess?.()
-      router.push('/dashboard')
+      login(data);
+      onSuccess?.();
+      router.push("/dashboard");
     },
-  })
+  });
 
   const onSubmit = (data: SignUpFormData) => {
-    const { confirmPassword, ...signUpData } = data
-    signUpMutation.mutate(signUpData)
-  }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { confirmPassword, ...signUpData } = data;
+    signUpMutation.mutate(signUpData);
+  };
 
   return (
-    <Card className={cn('w-full max-w-md', className)}>
+    <Card className={cn("w-full max-w-md", className)}>
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">회원가입</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">
+          회원가입
+        </CardTitle>
         <CardDescription className="text-center">
           새 계정을 만들어 서비스를 이용해보세요.
         </CardDescription>
@@ -139,11 +156,11 @@ export function SignUpForm({ className, onSuccess }: SignUpFormProps) {
               className="w-full"
               disabled={signUpMutation.isPending}
             >
-              {signUpMutation.isPending ? '가입 중...' : '회원가입'}
+              {signUpMutation.isPending ? "가입 중..." : "회원가입"}
             </Button>
           </form>
         </Form>
       </CardContent>
     </Card>
-  )
-} 
+  );
+}

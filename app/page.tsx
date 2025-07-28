@@ -1,80 +1,165 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
+import Link from "next/link";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useAuth } from '@/store/auth-store'
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function HomePage() {
-  const router = useRouter()
-  const { isAuthenticated, user, hydrated } = useAuth()
-
-  React.useEffect(() => {
-    // hydration이 완료되고 인증된 경우에만 리디렉션
-    if (hydrated && isAuthenticated) {
-      router.push('/dashboard')
-    }
-  }, [hydrated, isAuthenticated, router])
-
-  // Hydration이 완료되지 않은 경우 로딩 표시
-  if (!hydrated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="text-sm text-muted-foreground">앱을 초기화하는 중...</span>
-        </div>
-      </div>
-    )
-  }
-
-  if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold">
-              환영합니다! 👋
-            </CardTitle>
-            <CardDescription className="text-lg">
-              계정이 있으시면 로그인하시고, 없으시면 회원가입을 해주세요.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button
-              onClick={() => router.push('/auth/signin')}
-              className="w-full"
-              size="lg"
-            >
-              로그인
-            </Button>
-            <Button
-              onClick={() => router.push('/auth/signup')}
-              variant="outline"
-              className="w-full"
-              size="lg"
-            >
-              회원가입
-            </Button>
-          </CardContent>
-        </Card>
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl w-full space-y-8">
+        {/* 메인 헤더 */}
         <div className="text-center">
-          <p className="text-sm text-gray-600">
-            이미 로그인되어 있다면 자동으로 대시보드로 이동합니다.
+          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
+            새로운 프로젝트 시작 🚀
+          </h1>
+          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Next.js 15 + TypeScript 기반의 현대적인 웹 애플리케이션을
+            시작하세요. 모든 필수 기능이 준비되어 있습니다.
           </p>
+        </div>
+
+        {/* 기능 카드들 */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🔧</span>
+                <span>자동 CRUD 생성</span>
+              </CardTitle>
+              <CardDescription>
+                백엔드 스키마 기반으로 완전한 CRUD 시스템을 자동 생성합니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                  npm run generate-crud
+                </code>{" "}
+                명령으로 30초 만에 완성!
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🎨</span>
+                <span>shadcn/ui 디자인</span>
+              </CardTitle>
+              <CardDescription>
+                모던하고 아름다운 UI 컴포넌트가 이미 설치되어 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                TailwindCSS + shadcn/ui로 빠른 개발이 가능합니다.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>⚡</span>
+                <span>최적화된 성능</span>
+              </CardTitle>
+              <CardDescription>
+                TanStack Query, Zustand, ky 등 최신 라이브러리로 구축되었습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                캐싱, 상태 관리, API 통신이 모두 최적화되어 있습니다.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🔐</span>
+                <span>인증 시스템</span>
+              </CardTitle>
+              <CardDescription>
+                JWT 토큰 기반 인증과 권한 관리 시스템이 준비되어 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link href="/auth/signin">
+                  <Button variant="outline" size="sm" className="w-full">
+                    로그인
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button variant="outline" size="sm" className="w-full">
+                    회원가입
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>📱</span>
+                <span>반응형 디자인</span>
+              </CardTitle>
+              <CardDescription>
+                모바일부터 데스크톱까지 모든 기기에서 완벽하게 작동합니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                Mobile First 접근 방식으로 설계되었습니다.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🛠️</span>
+                <span>개발자 도구</span>
+              </CardTitle>
+              <CardDescription>
+                TypeScript, ESLint, Prettier가 모두 설정되어 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                코드 품질과 일관성을 보장하는 도구들이 준비되어 있습니다.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 시작하기 버튼 */}
+        <div className="text-center">
+          <div className="space-y-4">
+            <p className="text-lg text-gray-600">
+              지금 바로 개발을 시작하세요!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8">
+                프로젝트 시작하기
+              </Button>
+              <Button variant="outline" size="lg" className="text-lg px-8">
+                문서 보기
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
