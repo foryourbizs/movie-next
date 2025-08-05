@@ -113,7 +113,7 @@ export default function MovieDetailPage() {
           </div>
 
           {/* Bottom Info Area */}
-          <div className="py-16 md:px-12 lg:w-7xl mx-auto">
+          <div className="py-16 md:px-12 lg:max-w-7xl mx-auto">
             <div className="space-y-16">
               {/* 시놉시스 */}
               <SectionCard>
@@ -263,9 +263,6 @@ export default function MovieDetailPage() {
               <p className="text-lg text-gray-500">{movieData.originalTitle}</p>
             </div>
 
-            {/* Genre Info */}
-            <p className="text-sm text-gray-500">{movieData.genre}</p>
-
             {/* Language Selector */}
             <div className="relative">
               {isLanguageDropdownOpen && (
@@ -285,10 +282,17 @@ export default function MovieDetailPage() {
               )}
             </div>
 
+            {/* Synopsis */}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                {movieData.synopsis}
+              </p>
+            </div>
+
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <Button className="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-md font-medium">
-                대여하기
+                작품대여
               </Button>
               <Button
                 onClick={() => setIsVideoPlayerOpen(true)}
@@ -296,13 +300,6 @@ export default function MovieDetailPage() {
               >
                 미리보기
               </Button>
-            </div>
-
-            {/* Synopsis */}
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500 leading-relaxed">
-                {movieData.synopsis}
-              </p>
             </div>
 
             <Tabs defaultValue="director" className="w-full mt-6">

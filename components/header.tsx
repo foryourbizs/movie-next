@@ -18,7 +18,7 @@ export default function Header() {
           <div className="text-center text-lg font-bold md:text-xl">
             <Link href="/">서비스명</Link>
           </div>
-          <div className="hidden md:flex items-center justify-center gap-4.5 font-medium text-sm">
+          <div className="hidden md:flex items-center justify-center gap-4 font-medium text-sm">
             <p className="text-primary">영화</p>
             <p>큐레이션</p>
           </div>
@@ -26,7 +26,7 @@ export default function Header() {
         <div className="hidden md:flex items-center justify-center gap-8 font-medium text-sm">
           <div className="flex items-center gap-2">
             <Input
-              className="w-xs h-12 text-sm"
+              className="min-w-80 h-12 text-sm"
               placeholder="제목, 감독이름으로 검색"
             />
           </div>
@@ -34,7 +34,7 @@ export default function Header() {
             <p>로그인/가입</p>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-end gap-4.5 md:hidden">
+        <div className="flex-1 flex items-center justify-end gap-4 md:hidden">
           <Search
             className="w-5.5 h-5.5 cursor-pointer"
             onClick={() => setActiveScreen("search")}

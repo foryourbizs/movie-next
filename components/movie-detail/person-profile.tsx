@@ -43,7 +43,7 @@ export function PersonProfile({
     <div key={id} className="space-y-4">
       <div className="flex items-center space-x-6">
         <div>
-          <Avatar className="w-26 h-26 ring-4 ring-gray-100">
+          <Avatar className="w-28 h-28 ring-4 ring-gray-100">
             <AvatarImage src={imageUrl} />
             <AvatarFallback>
               <User className="w-6 h-6" />
