@@ -31,20 +31,24 @@ export default function HomePage() {
             </div>
             <div className="h-14 md:h-auto flex items-center justify-between px-6 border-b border-gray-300 md:border-none md:mb-6">
               <p className="text-sm md:text-base">
-                총 100개의 작품이 검색되었어요!
+                총 30개의 작품이 검색되었어요!
               </p>
               <SortDropdown />
             </div>
-            <div className="py-6 px-4 md:py-0">
+            <div className="py-6 px-4 md:py-0 md:pb-6">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-6 md:gap-y-10 gap-x-2">
-                {Array.from({ length: 30 }).map((_, index) => (
-                  <MovieCard
-                    key={index}
-                    id={`movie-${index + 1}`}
-                    title={`영화 제목 ${index + 1}`}
-                    subtitle="미국 · 2016 · 다큐멘터리 · 나탈리 헬트젤, 레인 발데즈"
-                  />
-                ))}
+                {Array.from({ length: 30 }).map((_, index) => {
+                  const imageNumber = (index % 10) + 1;
+                  return (
+                    <MovieCard
+                      key={index}
+                      id={`movie-${index + 1}`}
+                      title={`영화 제목 ${index + 1}`}
+                      subtitle="미국 · 2016 · 다큐멘터리 · 나탈리 헬트젤, 레인 발데즈"
+                      imageUrl={`/images/${imageNumber}.jpg`}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>

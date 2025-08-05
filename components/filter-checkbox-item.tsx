@@ -19,8 +19,11 @@ export function FilterCheckboxItem({
         className="w-5 h-5"
         checked={checked}
         onCheckedChange={onChange}
+        id={label}
       />
-      <p className="text-sm">{label}</p>
+      <label className="text-sm cursor-pointer" htmlFor={label}>
+        {label}
+      </label>
     </div>
   );
 }
