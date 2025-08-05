@@ -7,11 +7,13 @@ import { SectionCard } from "@/components/movie-detail/section-card";
 import { SectionHeader } from "@/components/movie-detail/section-header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VideoPlayer } from "@/components/video-player";
 import Image from "next/image";
 import { useState } from "react";
 
 export default function MovieDetailPage() {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState(false);
 
   // 실제 "봉기하라" 영화 데이터
   const movieData = {
@@ -71,6 +73,8 @@ export default function MovieDetailPage() {
     synopsis: `한 젊은 액티비스트 여성이 거리를 가로질러 달려간다. 스케이트보드를 탄 남자는 아스팔트 도로를 미끄러져 간다. 페인트 폭탄이 설치되고 폭발하면 경찰이 도착한다. 어디에든 사람들이 있다. 밤에는 투석전이 있고, 차들이 불타고, 최루탄 가스가 퍼져나간다. 대통령궁은 여전히 보호되고 있다. 트위터에는 사건들이 포스팅되고, 그리고 전 세계로 퍼져나간다. "시장은 글로벌하다. 저항 역시 그러하다."`,
     programNote: `영화 초창기 유행하던 도시영화의 포스트 펑크 버전. 도시는 우리가 살기에 우리의 것이며 전 세계는 자본주의가부장제제국주의로 통일되었기에 그에 대한 저항도 전 세계적이어야 한다. 어떻게 저항할 수 있는가? 스케이트보드, 트위터, 음악, 춤, 낙서, 카메라, 방독면, 군중, 시위, 속도, 달리기, 그림자가 도시를 뒤덮어야 한다. 누가? 모두의 다름을 인정하면서 함께할 수 있는 사랑의 다중 (마이클 하트)이 있어야 한다. 길들여지지 말고 봉기하라 그리하면 자유로워지리라. [김선아]`,
     imageUrl: "/images/rise.jpg",
+    streamUrl:
+      "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
   };
 
   return (
@@ -103,12 +107,13 @@ export default function MovieDetailPage() {
                 ageRating={movieData.ageRating}
                 keywords={movieData.keywords}
                 festival={movieData.festival}
+                onPreviewClick={() => setIsVideoPlayerOpen(true)}
               />
             </div>
           </div>
 
           {/* Bottom Info Area */}
-          <div className="py-16 md:px-12">
+          <div className="py-16 md:px-12 lg:w-7xl mx-auto">
             <div className="space-y-16">
               {/* 시놉시스 */}
               <SectionCard>
@@ -280,10 +285,18 @@ export default function MovieDetailPage() {
               )}
             </div>
 
-            {/* Rent Button */}
-            <Button className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-md font-medium">
-              대여하기
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button className="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-md font-medium">
+                대여하기
+              </Button>
+              <Button
+                onClick={() => setIsVideoPlayerOpen(true)}
+                className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-md font-medium"
+              >
+                미리보기
+              </Button>
+            </div>
 
             {/* Synopsis */}
             <div className="space-y-2">
@@ -347,6 +360,16 @@ export default function MovieDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Video Player Modal */}
+      {isVideoPlayerOpen && (
+        <VideoPlayer
+          src={movieData.streamUrl}
+          poster={movieData.imageUrl}
+          onClose={() => setIsVideoPlayerOpen(false)}
+          onReady={() => console.log("Video player is ready")}
+        />
+      )}
     </div>
   );
 }
