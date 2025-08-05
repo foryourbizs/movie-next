@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js App with Authentication",
-  description: "Next.js 15 + TypeScript + ky HTTP Client",
+  title: "제안용 영화 서비스",
+  description: "제안용 영화 서비스",
 };
 
 export default function RootLayout({
