@@ -12,7 +12,7 @@ export default function Header() {
 
   return (
     <>
-      <div className="h-16 flex items-center px-4 border-b border-gray-300 md:justify-between w-full md:px-12 lg:w-7xl mx-auto">
+      <div className="h-16 flex items-center px-4 border-b border-gray-300 md:justify-between w-full md:px-12 lg:max-w-7xl mx-auto">
         <div className="flex-1 md:hidden"></div>
         <div className="flex-1 md:flex md:gap-10">
           <div className="text-center text-lg font-bold md:text-xl">
