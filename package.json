@@ -18,8 +18,8 @@
     "railway:vars": "railway variables",
     "type-check": "tsc --noEmit",
     "pre-deploy": "npm run type-check && npm run lint && npm run validate-env",
-    "clean": "rm -rf .next && rm -rf node_modules/.cache && npm cache clean --force",
-    "fresh-install": "npm run clean && npm ci"
+    "clean": "rm -rf .next && rm -rf /tmp/npm-cache",
+    "fresh-install": "npm run clean && npm ci --no-audit --no-fund"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",
