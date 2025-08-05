@@ -5,8 +5,17 @@
 # Nixpacks 빌더 사용 (Node.js 프로젝트에 최적화)
 builder = "NIXPACKS"
 
-# 빌드 명령어 (Next.js 프로덕션 빌드)
-buildCommand = "npm ci && npm run build"
+# 빌드 명령어 (Next.js 프로덕션 빌드) - 캐시 정리 후 설치
+buildCommand = "npm cache clean --force && npm ci --omit=dev && npm run build"
+
+# 빌드 시 환경 변수 설정
+[build.env]
+# npm 관련 설정
+NPM_CONFIG_FUND = "false"
+NPM_CONFIG_AUDIT = "false"
+NPM_CONFIG_CACHE = "/tmp/.npm"
+# Node.js 메모리 설정
+NODE_OPTIONS = "--max-old-space-size=4096"
 
 # 빌드 환경 V2 사용 (최신 환경)
 buildEnvironment = "V2"
@@ -69,7 +78,13 @@ maxHealthcheckFailures = 2
 # 환경별 설정
 [environments.production]
 [environments.production.build]
-buildCommand = "npm ci --only=production && npm run build"
+buildCommand = "npm cache clean --force && npm ci --omit=dev && npm run build"
+
+[environments.production.build.env]
+NPM_CONFIG_FUND = "false"
+NPM_CONFIG_AUDIT = "false"
+NPM_CONFIG_CACHE = "/tmp/.npm"
+NODE_OPTIONS = "--max-old-space-size=8192"
 
 [environments.production.deploy]
 # 프로덕션에서는 더 많은 인스턴스 실행
@@ -86,7 +101,13 @@ diskBytes = 21474836480
 
 [environments.develop]
 [environments.develop.build]
-buildCommand = "npm ci && npm run build"
+buildCommand = "npm cache clean --force && npm ci && npm run build"
+
+[environments.develop.build.env]
+NPM_CONFIG_FUND = "false"
+NPM_CONFIG_AUDIT = "false"
+NPM_CONFIG_CACHE = "/tmp/.npm"
+NODE_OPTIONS = "--max-old-space-size=2048"
 
 [environments.develop.deploy]
 # 개발/테스트용으로 1개 인스턴스만 사용
