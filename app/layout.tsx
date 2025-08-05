@@ -41,6 +41,12 @@ export default function RootLayout({
         <QueryProvider>
           <TokenMonitorProvider>
             <div className="h-full flex flex-col">
+              <div className="w-full py-4 text-center text-sm text-white bg-black">
+                <p>본 서비스는 제안 목적으로 제작되었습니다.</p>
+                <p>
+                  검색 페이지 및 상세페이지 디자인 초안만 구현되어 있습니다.
+                </p>
+              </div>
               <Header />
               <main>{children}</main>
             </div>

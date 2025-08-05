@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, Menu, PlayCircle, Search, Star, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Input } from "./ui/input";
 
@@ -15,7 +16,7 @@ export default function Header() {
         <div className="flex-1 md:hidden"></div>
         <div className="flex-1 md:flex md:gap-10">
           <div className="text-center text-lg font-bold md:text-xl">
-            서비스명
+            <Link href="/">서비스명</Link>
           </div>
           <div className="hidden md:flex items-center justify-center gap-4.5 font-medium text-sm">
             <p className="text-primary">영화</p>
